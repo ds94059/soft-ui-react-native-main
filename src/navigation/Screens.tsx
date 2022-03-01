@@ -1,7 +1,7 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 
-import { Articles, Components, Home, Profile, Register, Pro } from '../screens';
+import { Articles, Components, Home, Profile, Register, Pro, Users } from '../screens';
 import { Sprayer, Fan, Door } from '../devices';
 import { useScreenOptions, useTranslation } from '../hooks';
 
@@ -60,6 +60,12 @@ export default () => {
       <Stack.Screen
         name="Door"
         component={Door}
+        options={{ headerShown: false }}
+      />
+
+      <Stack.Screen
+        name="Users"
+        component={Users}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>
