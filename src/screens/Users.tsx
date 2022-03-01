@@ -20,7 +20,7 @@ const Users = () => {
         require('../assets/images/avatar2.png'),
         require('../assets/images/avatar2.png'),
         require('../assets/images/avatar2.png'),
-        require('../assets/images/avatar2.png'),
+        { uri: user.avatar },
     ]
     const [selectedIdx, setIdx] = useState(0);
     const [imageSrc, setImageSrc] = useState(imgData[0]);
@@ -83,7 +83,6 @@ const Users = () => {
                                             setIdx(selectedIdx - 1);
                                             setQuantity(userData[selectedIdx - 1]);
                                             setImageSrc(imgData[selectedIdx - 1]);
-                                            console.log(selectedIdx - 1);
                                         }
                                     }}>
                                     <Ionicons

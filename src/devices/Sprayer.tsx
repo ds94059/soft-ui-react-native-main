@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Linking, StatusBar, View, Alert, FlatList } from 'react-native';
 import { useNavigation } from '@react-navigation/core';
 import { Ionicons } from '@expo/vector-icons';
+import { bleManager } from '../../App';
 
 import { Block, Button, Image, Text, Switch, Modal, Input } from '../components/';
 import { useData, useTheme, useTranslation } from '../hooks/';
@@ -15,6 +16,8 @@ const Sprayer = () => {
     const [switch1, setSwitch1] = useState(false);
     const [showModal, setModal] = useState(false);
     const [quantity, setQuantity] = useState('Michael');
+
+
 
     useEffect(() => {
         StatusBar.setBarStyle('light-content');

@@ -1,4 +1,5 @@
 import React, { useCallback, useState, useEffect } from 'react';
+import { bleManager } from '../../App';
 
 import { useData, useTheme, useTranslation } from '../hooks/';
 import { Block, Button, Image, Input, Product, Text } from '../components/';
@@ -53,8 +54,6 @@ const Home = () => {
             setProducts(trending);
 
     }, [data, selected, setProducts]);
-
-
 
     return (
         <Block>

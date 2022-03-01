@@ -19,13 +19,15 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ChenJui.IoTApp"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#CB0C9F"
-      }
+      },
+      "package": "com.ChenJui.IoTApp"
     },
     "web": {
       "favicon": "./assets/favicon.png"
