@@ -1,9 +1,79 @@
 import React, { useCallback, useState, useEffect } from 'react';
-import { bleManager } from '../../App';
+import { PermissionsAndroid, Alert } from 'react-native';
+import { BleManager, State, ScanMode, Device } from 'react-native-ble-plx';
 
 import { useData, useTheme, useTranslation } from '../hooks/';
 import { Block, Button, Image, Input, Product, Text } from '../components/';
 import { IArticle, ICategory } from '../constants/types';
+
+export const bleManager = new BleManager();
+export let sprayer: Device;
+
+//init bleManager
+const requestCameraPermission = async () => {
+    try {
+        const granted = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+            {
+                title: "Cool BLE App Location Request",
+                message:
+                    "Cool BLE App needs access to your location " +
+                    "so you can connect to ble devices.",
+                buttonNeutral: "Ask Me Later",
+                buttonNegative: "Cancel",
+                buttonPositive: "OK"
+            }
+        );
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+            // init bleManager
+            const subscription = bleManager.onStateChange((state) => {
+                if (state === State.PoweredOn) {
+                    // 已確認藍牙正常開啟
+                    console.log('scanning...')
+                    bleManager.startDeviceScan(null, { scanMode: ScanMode.LowLatency }, (error, device) => {
+                        if (error) {
+                            console.log(error);
+                            return;
+                        }
+
+                        if (device?.name !== "ArduinoBLE") return;
+
+                        console.log('founded');
+                        sprayer = device;
+                        bleManager.stopDeviceScan();
+                        connectDevice(sprayer);
+                        subscription.remove();
+                    })
+                }
+            }, true)
+
+        } else {
+            console.log("Camera permission denied");
+        }
+    } catch (err) {
+        console.warn(err);
+    }
+};
+
+// connect to the sprayer
+const connectDevice = async (sprayer: Device) => {
+    try {
+        console.log('connecting...')
+        await sprayer.connect()
+            .then(async (sprayer: Device) => {
+                await sprayer.discoverAllServicesAndCharacteristics();
+                //setisConnected(true);
+                console.log("connected");
+                Alert.alert("Device connected", sprayer.name + " is connected.");
+            })
+            .catch((error: any) => {
+                // Handle errors
+                console.log(error);
+            });
+    } catch (error: any) {
+        console.log(error);
+    }
+}
 
 const Home = () => {
     const data = useData();
@@ -29,6 +99,10 @@ const Home = () => {
         categories.push({ id: 1, name: 'Popular', image: require('../assets/icons/office.png') });
         categories.push({ id: 2, name: 'Newest', image: require('../assets/icons/home.png') });
     }
+
+    useEffect(() => {
+        requestCameraPermission();
+    })
 
     // init articles
     useEffect(() => {

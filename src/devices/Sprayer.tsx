@@ -1,15 +1,18 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Linking, StatusBar, View, Alert, FlatList } from 'react-native';
+import * as RNFS from 'react-native-fs';
 import { useNavigation } from '@react-navigation/core';
 import { Ionicons } from '@expo/vector-icons';
-import { bleManager } from '../../App';
+global.Buffer = global.Buffer || require('buffer').Buffer
 
 import { Block, Button, Image, Text, Switch, Modal, Input } from '../components/';
 import { useData, useTheme, useTranslation } from '../hooks/';
 import { color } from 'react-native-reanimated';
+import { bleManager, sprayer } from '../screens/Home';
+
+
 
 const Sprayer = () => {
-    const { user } = useData();
     const { assets, colors, gradients, sizes } = useTheme();
     const { t } = useTranslation();
     const navigation = useNavigation();
@@ -26,12 +29,91 @@ const Sprayer = () => {
         };
     }, []);
 
-    const handleSwitch = (switch1: boolean) => {
+    useEffect(() => {
+        const fetchDevice = async () => {
+            console.log(sprayer.name);
+        }
+
+        fetchDevice().catch(console.error);
+        fetchUserData();
+    }, []);
+
+    const fetchUserData = () => {
+        RNFS.readFile('/storage/emulated/0/DATA/data.json', 'ascii')
+            .then((res) => {
+                console.log(res);
+                const d = JSON.parse(res);
+                console.log(d);
+            })
+            .catch((err) => {
+                console.log(err.message, err.code);
+            });
+    }
+
+    // define writing service id
+    let writeServiceId = "";
+    let writeCharId = "";
+    let readServiceId = "";
+    let readCharId = "";
+    const handleSwitch = async (switch1: boolean) => {
         setSwitch1(switch1);
+
+        // get service and characteristic id
+        const services = await sprayer.services();
+        for (const service of services) {
+            const characteristics = await service.characteristics();
+            for (const characteristic of characteristics) {
+                if (characteristic.isWritableWithResponse) {
+                    // get writing service id
+                    writeServiceId = service.uuid;
+                    writeCharId = characteristic.uuid;
+                    console.log("writeServiceId: ", writeServiceId);
+                    console.log("writeCharId: ", writeCharId);
+                }
+                if (characteristic.isReadable) {
+                    // get read service id
+                    readServiceId = service.uuid;
+                    readCharId = characteristic.uuid;
+                    console.log("readServiceId: ", readServiceId);
+                    console.log("readCharId", readCharId);
+                }
+            }
+        }
+        let formatValue;
+
+        if (switch1) {
+            try {
+                switch (quantity) {
+                    case "Michael":
+                        writeData(5, 2, writeServiceId, writeCharId);
+                        break;
+                    case "Jason":
+                        writeData(3, 1, writeServiceId, writeCharId);
+                        break;
+                    case "Vinci":
+                        writeData(2, 2, writeServiceId, writeCharId);
+                        break;
+                }
+            } catch (error) {
+                console.error(error);
+            }
+
+        }
+        else {
+            formatValue = Buffer.from("B").toString("base64");
+            bleManager.writeCharacteristicWithResponseForDevice(
+                sprayer.id,
+                writeServiceId,
+                writeCharId,
+                formatValue
+            )
+        }
+
         if (switch1)
             Alert.alert('Sprayer is looping...', 'Sprayer is set as 5s on/ 2s off.');
         else
             Alert.alert('Sprayer is not looping.', 'Sprayer loop is off.');
+
     }
 
     return (
@@ -192,4 +274,40 @@ const Sprayer = () => {
 };
 
 export default Sprayer;
+
+function writeData(onTime: number, offTime: number, wsid: string, wcid: string) {
+    let formatValue;
+    formatValue = Buffer.from("A").toString("base64");
+
+    bleManager.writeCharacteristicWithResponseForDevice(
+        sprayer.id,
+        wsid,
+        wcid,
+        formatValue
+    ).then(characteristic => {
+        // state wait
+        console.log('wait');
+        formatValue = Buffer.from(onTime.toString()).toString("base64");
+        console.log(formatValue);
+        bleManager.writeCharacteristicWithResponseForDevice(
+            sprayer.id,
+            wsid,
+            wcid,
+            formatValue
+        ).then(characteristic => {
+            // state acceptOne
+            console.log('accept one');
+            formatValue = Buffer.from(offTime.toString()).toString("base64");
+            bleManager.writeCharacteristicWithResponseForDevice(
+                sprayer.id,
+                wsid,
+                wcid,
+                formatValue
+            ).then(characteristic => {
+                console.log('accept two, success');
+            })
+        })
+
+    })
+}
 

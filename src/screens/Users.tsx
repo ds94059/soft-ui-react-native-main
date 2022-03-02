@@ -7,7 +7,7 @@ import { Block, Button, Image, Text, Modal, Input } from '../components/';
 import { useData, useTheme, useTranslation } from '../hooks/';
 
 const Users = () => {
-    const { user } = useData();
+    const { users } = useData();
     const { assets, colors, gradients, sizes } = useTheme();
     const { t } = useTranslation();
     const navigation = useNavigation();
@@ -15,16 +15,15 @@ const Users = () => {
     const [quantity, setQuantity] = useState('Michael');
     const userData = ['Michael', 'Jason', 'Vinci', 'Luke', 'Justin', 'Evelyn'];
     const imgData = [
-        require('../assets/images/avatar1.png'),
-        require('../assets/images/avatar2.png'),
-        require('../assets/images/avatar2.png'),
-        require('../assets/images/avatar2.png'),
-        require('../assets/images/avatar2.png'),
-        { uri: user.avatar },
+        { uri: users[0].avatar },
+        { uri: users[1].avatar },
+        { uri: users[2].avatar },
+        { uri: users[3].avatar },
+        { uri: users[4].avatar },
+        { uri: users[5].avatar },
     ]
     const [selectedIdx, setIdx] = useState(0);
     const [imageSrc, setImageSrc] = useState(imgData[0]);
-
 
     useEffect(() => {
         StatusBar.setBarStyle('light-content');
