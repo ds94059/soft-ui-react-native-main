@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Linking, StatusBar, View, Alert, FlatList } from 'react-native';
+import { Linking, StatusBar, View, Alert, FlatList, PermissionsAndroid } from 'react-native';
 import * as RNFS from 'react-native-fs';
 import { useNavigation } from '@react-navigation/core';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,6 +11,52 @@ import { color } from 'react-native-reanimated';
 import { bleManager, sprayer } from '../screens/Home';
 
 
+export let userConfig: any;
+
+// request storage permission
+const requestStoragePermission = async () => {
+    try {
+        const granted = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+            {
+                title: "Cool BLE App Storage Request",
+                message:
+                    "Cool BLE App needs access to your storage " +
+                    "so you can custom your user config.",
+                buttonNeutral: "Ask Me Later",
+                buttonNegative: "Cancel",
+                buttonPositive: "OK"
+            }
+        );
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+            console.log("granted1");
+
+            const grant = await PermissionsAndroid.request(
+                PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+                {
+                    title: "Cool BLE App Storage Request",
+                    message:
+                        "Cool BLE App needs access to your storage " +
+                        "so you can custom your user config.",
+                    buttonNeutral: "Ask Me Later",
+                    buttonNegative: "Cancel",
+                    buttonPositive: "OK"
+                }
+            );
+            if (grant === PermissionsAndroid.RESULTS.GRANTED) {
+                console.log("granted2");
+
+            } else {
+                console.log("Storage permission denied");
+            }
+        } else {
+            console.log("Storage permission denied");
+        }
+
+    } catch (err) {
+        console.warn(err);
+    }
+};
 
 const Sprayer = () => {
     const { assets, colors, gradients, sizes } = useTheme();
@@ -18,9 +64,9 @@ const Sprayer = () => {
     const navigation = useNavigation();
     const [switch1, setSwitch1] = useState(false);
     const [showModal, setModal] = useState(false);
-    const [quantity, setQuantity] = useState('Michael');
-
-
+    const [quantity, setQuantity] = useState("");
+    const [userData, setuserData] = useState([""]);
+    const [selectedIdx, setIdx] = useState(0);
 
     useEffect(() => {
         StatusBar.setBarStyle('light-content');
@@ -35,19 +81,67 @@ const Sprayer = () => {
         }
 
         fetchDevice().catch(console.error);
+        const permit = requestStoragePermission();
         fetchUserData();
     }, []);
 
-    const fetchUserData = () => {
-        RNFS.readFile('/storage/emulated/0/DATA/data.json', 'ascii')
-            .then((res) => {
-                console.log(res);
-                const d = JSON.parse(res);
-                console.log(d);
-            })
-            .catch((err) => {
-                console.log(err.message, err.code);
-            });
+    const initData = () => {
+        console.log(userConfig);
+        while (userData.length > 0) {
+            userData.pop();
+        }
+
+        userConfig.users.forEach((user: any) => {
+            userData.push(user.name);
+        })
+        setQuantity(userConfig.users[0].name);
+        console.log(userData);
+    }
+
+    const fetchUserData = async () => {
+        // const path = '/storage/emulated/0/Download/data.json';
+        const path = RNFS.DocumentDirectoryPath + '/data.json';
+        const exist = await RNFS.exists(path);
+        if (exist) {
+            RNFS.readFile(path, 'ascii')
+                .then((res) => {
+                    const data = JSON.parse(res);
+                    userConfig = data;
+                    initData();
+                    console.log("userData: ", userConfig.users[1].onTime);
+                })
+                .catch((err) => {
+                    console.log(err.message, err.code);
+                });
+        }
+        else {
+            const data = {
+                users: [{
+                    name: "Michael",
+                    onTime: 5,
+                    offTime: 2,
+                },
+                {
+                    name: "Jason",
+                    onTime: 3,
+                    offTime: 1
+                },
+                {
+                    name: "Vinci",
+                    onTime: 2,
+                    offTime: 2
+                }]
+            };
+            userConfig = data;
+            initData();
+            RNFS.writeFile(path, JSON.stringify(data), 'utf8')
+                .then((success) => {
+                    console.log('FILE WRITTEN!');
+                })
+                .catch((err) => {
+                    console.log(err.message);
+                });
+        }
     }
 
     // define writing service id
@@ -83,17 +177,9 @@ const Sprayer = () => {
 
         if (switch1) {
             try {
-                switch (quantity) {
-                    case "Michael":
-                        writeData(5, 2, writeServiceId, writeCharId);
-                        break;
-                    case "Jason":
-                        writeData(3, 1, writeServiceId, writeCharId);
-                        break;
-                    case "Vinci":
-                        writeData(2, 2, writeServiceId, writeCharId);
-                        break;
-                }
+                console.log(selectedIdx);
+                writeData(userConfig.users[selectedIdx].onTime, userConfig.users[selectedIdx].offTime, writeServiceId, writeCharId);
+                Alert.alert('Sprayer is looping...', 'Sprayer is set as ' + userConfig.users[selectedIdx].onTime + 's on/ ' + userConfig.users[selectedIdx].offTime + 's off.');
             } catch (error) {
                 console.error(error);
             }
@@ -109,9 +195,7 @@ const Sprayer = () => {
             )
         }
 
-        if (switch1)
-            Alert.alert('Sprayer is looping...', 'Sprayer is set as 5s on/ 2s off.');
-        else
+        if (!switch1)
             Alert.alert('Sprayer is not looping.', 'Sprayer loop is off.');
 
     }
@@ -253,13 +337,14 @@ const Sprayer = () => {
             <Modal visible={showModal} onRequestClose={() => setModal(false)}>
                 <FlatList
                     keyExtractor={(index) => `${index}`}
-                    data={['Michael', 'Jason', 'Vinci', 'Luke', 'Justin', 'Evelyn']}
-                    renderItem={({ item }) => (
+                    data={userData}
+                    renderItem={({ item, index }) => (
                         <Button
                             marginBottom={sizes.sm}
                             onPress={() => {
                                 setQuantity(item);
                                 setModal(false);
+                                setIdx(index);
                             }}>
                             <Text p white semibold>
                                 {item}

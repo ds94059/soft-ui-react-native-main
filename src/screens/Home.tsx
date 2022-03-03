@@ -10,7 +10,7 @@ export const bleManager = new BleManager();
 export let sprayer: Device;
 
 //init bleManager
-const requestCameraPermission = async () => {
+const requestBlePermission = async () => {
     try {
         const granted = await PermissionsAndroid.request(
             PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
@@ -48,12 +48,14 @@ const requestCameraPermission = async () => {
             }, true)
 
         } else {
-            console.log("Camera permission denied");
+            console.log("Storage permission denied");
         }
     } catch (err) {
         console.warn(err);
     }
 };
+
+
 
 // connect to the sprayer
 const connectDevice = async (sprayer: Device) => {
@@ -101,7 +103,7 @@ const Home = () => {
     }
 
     useEffect(() => {
-        requestCameraPermission();
+        requestBlePermission();
     })
 
     // init articles

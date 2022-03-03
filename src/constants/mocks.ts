@@ -86,28 +86,28 @@ export const USERS: IUser[] = [
 export const FOLLOWING: IProduct[] = [
   {
     id: 1,
+    type: 'horizontal',
+    title: 'The highest status people.',
+    description: 'Sprayer',
+    image: require('../assets/images/sprayer.png'),
+  },
+  {
+    id: 2,
     type: 'vertical',
     title: 'Unique activities with local experts.',
     description: 'Fan',
     image: require('../assets/images/fan.png'),
   },
   {
-    id: 2,
-    type: 'vertical',
-    title: 'The highest status people.',
-    description: 'Sprayer',
-    image: require('../assets/images/sprayer.png'),
-  },
-  {
     id: 3,
-    type: 'horizontal',
+    type: 'vertical',
     title: 'Experiences and things to do wherever you are.',
     description: 'Fan',
     image: require('../assets/images/conditioner.png'),
   },
   {
     id: 4,
-    type: 'vertical',
+    type: 'horizontal',
     title: 'Get more followers and grow.',
     description: 'Door',
     image: require('../assets/images/sliding-door.png'),
@@ -121,7 +121,7 @@ export const FOLLOWING: IProduct[] = [
   },
   {
     id: 6,
-    type: 'horizontal',
+    type: 'vertical',
     title: 'Adventures - Multi day trips with meals and stays.',
     description: 'Fan',
     image: require('../assets/images/coffee-grinder.png'),
