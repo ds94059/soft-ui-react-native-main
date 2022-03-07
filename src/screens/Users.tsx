@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Linking, StatusBar, View, FlatList } from 'react-native';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
+import { Linking, StatusBar, View, FlatList, Alert } from 'react-native';
 import * as RNFS from 'react-native-fs';
+import Dialog from "react-native-dialog";
 import { useNavigation } from '@react-navigation/core';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -9,16 +10,35 @@ import { useData, useTheme, useTranslation } from '../hooks/';
 import { userConfig } from '../devices/Sprayer';
 import { toNumber } from 'i18n-js';
 
+interface IUser {
+    id: number | string;
+    name: string;
+    onTime: number;
+    offTime: number;
+}
+
 const Users = () => {
     const { users } = useData();
     const { assets, colors, gradients, sizes } = useTheme();
     const { t } = useTranslation();
     const navigation = useNavigation();
     const [showModal, setModal] = useState(false);
-    const [quantity, setQuantity] = useState(userConfig.users[0].name);
-    const [userData, setuserData] = useState([userConfig.users[0].name]);
-    const [onTime, setonTime] = useState(userConfig.users[0].onTime);
-    const [offTime, setoffTime] = useState(userConfig.users[0].offTime);
+    const [userData, setuserData] = useState<IUser[]>([{
+        id: 0,
+        name: userConfig.users[0].name,
+        onTime: userConfig.users[0].onTime,
+        offTime: userConfig.users[0].offTime
+    }]);
+    const [quantity, setQuantity] = useState(userData[0].name);
+    const [userNames, setuserNames] = useState([userData[0].name]);
+    const [onTime, setonTime] = useState(userData[0].onTime);
+    const [offTime, setoffTime] = useState(userData[0].offTime);
+    const [nameDlVisible, setNameDlVisible] = useState(false);
+    const [onTimeDlVisible, setOnTimeDlVisible] = useState(false);
+    const [offTimeDlVisible, setOffTimeDlVisible] = useState(false);
+    const [newPersonName, setNewPersonName] = useState("");
+    const [newOnTime, setNewOnTime] = useState(0);
+    const [newOffTime, setNewOffTime] = useState(0);
 
     const imgData = [
         { uri: users[0].avatar },
@@ -32,32 +52,44 @@ const Users = () => {
     const [imageSrc, setImageSrc] = useState(imgData[0]);
 
     const initData = () => {
-        console.log(userConfig);
         while (userData.length > 0) {
             userData.pop();
         }
-
-        userConfig.users.forEach((user: any) => {
-            userData.push(user.name);
+        userConfig.users.forEach((user: any, index: number) => {
+            userData.push({ id: index, name: user.name, onTime: user.onTime, offTime: user.offTime });
         })
-        console.log(userData);
+
+        while (userNames.length > 0) {
+            userNames.pop();
+        }
+
+        userData.forEach((user) => {
+            userNames.push(user.name);
+        })
+        console.log(userNames);
     }
 
     const handleEditonTime = (time: number) => {
         setonTime(time);
-        userConfig.users[selectedIdx].onTime = time;
+        userData[selectedIdx].onTime = time;
         handleSave();
     }
 
     const handleEditoffTime = (time: number) => {
         setoffTime(time);
-        userConfig.users[selectedIdx].offTime = time;
+        userData[selectedIdx].offTime = time;
         handleSave();
     }
 
     const handleSave = () => {
         // const path = '/storage/emulated/0/Download/data.json';
         const path = RNFS.DocumentDirectoryPath + '/data.json';
+
+        userConfig.users = [];
+        userData.forEach((user: IUser, index: number) => {
+            userConfig.users.push({ name: user.name, onTime: user.onTime, offTime: user.offTime });
+        });
+        console.log(userData);
 
         RNFS.writeFile(path, JSON.stringify(userConfig), 'utf8')
             .then((success) => {
@@ -66,6 +98,68 @@ const Users = () => {
             .catch((err) => {
                 console.log(err.message);
             });
+    }
+
+    const handleCancel = () => {
+        setNameDlVisible(false);
+        setOnTimeDlVisible(false);
+        setOffTimeDlVisible(false);
+    }
+
+    const handleDelete = () => {
+        Alert.alert(
+            "Person delete",
+            "Do you want to delete this account?\nYou cannot undo this action.",
+            [
+                {
+                    text: "Cancel",
+                    onPress: () => {
+                        console.log("Cancel Pressed");
+                    },
+                    style: "cancel"
+                },
+                {},
+                {
+                    text: "OK",
+                    onPress: () => {
+                        console.log("OK Pressed");
+                        userNames.splice(selectedIdx, 1);
+                        userData.splice(selectedIdx, 1);
+
+                        if (userData.length > 0) {
+                            setIdx(0);
+                            setQuantity(userData[0].name);
+                            setImageSrc(imgData[0]);
+                            setonTime(userData[0].onTime);
+                            setoffTime(userData[0].offTime);
+                        }
+                        ///handleSave();
+                    }
+                }
+            ]
+        );
+
+
+    }
+
+    const handleAddPerson = () => {
+        setOffTimeDlVisible(false);
+        console.log(newPersonName);
+        console.log(newOnTime);
+        console.log(newOffTime);
+        const toPush: IUser = { id: userData.length, name: newPersonName, onTime: newOnTime, offTime: newOffTime };
+        userData.push(toPush);
+
+        userNames.push(newPersonName);
+
+        const index = userData.length - 1;
+        setIdx(index);
+        setQuantity(userData[index].name);
+        setImageSrc(imgData[index]);
+        setonTime(userData[index].onTime);
+        setoffTime(userData[index].offTime);
+
+        //handleSave();
     }
 
     useEffect(() => {
@@ -124,10 +218,10 @@ const Users = () => {
                                     onPress={() => {
                                         if (selectedIdx > 0) {
                                             setIdx(selectedIdx - 1);
-                                            setQuantity(userData[selectedIdx - 1]);
+                                            setQuantity(userData[selectedIdx - 1].name);
                                             setImageSrc(imgData[selectedIdx - 1]);
-                                            setonTime(userConfig.users[selectedIdx - 1].onTime);
-                                            setoffTime(userConfig.users[selectedIdx - 1].offTime);
+                                            setonTime(userData[selectedIdx - 1].onTime);
+                                            setoffTime(userData[selectedIdx - 1].offTime);
                                         }
                                     }}>
                                     <Ionicons
@@ -142,7 +236,6 @@ const Users = () => {
                                     row
                                     gradient={gradients.dark}
                                     onPress={() => setModal(true)}
-                                    onLongPress={() => console.log("longpress")}
                                     marginHorizontal={sizes.s}>
                                     <Block
                                         row
@@ -166,12 +259,12 @@ const Users = () => {
                                     color="rgba(255,255,255,0.2)"
                                     outlined={String(colors.white)}
                                     onPress={() => {
-                                        if (selectedIdx < userData.length - 1) {
+                                        if (selectedIdx < userNames.length - 1) {
                                             setIdx(selectedIdx + 1);
-                                            setQuantity(userData[selectedIdx + 1]);
+                                            setQuantity(userData[selectedIdx + 1].name);
                                             setImageSrc(imgData[selectedIdx + 1]);
-                                            setonTime(userConfig.users[selectedIdx + 1].onTime);
-                                            setoffTime(userConfig.users[selectedIdx + 1].offTime);
+                                            setonTime(userData[selectedIdx + 1].onTime);
+                                            setoffTime(userData[selectedIdx + 1].offTime);
                                         }
                                     }}>
                                     <Ionicons
@@ -194,27 +287,43 @@ const Users = () => {
                             </Block>
                             <Text white bold marginHorizontal={sizes.s}>s     Off</Text>
                         </Block>
-                        {/* <Block align='flex-end'>
-                            <Button
-                                shadow={false}
-                                radius={sizes.m}
-                                color="rgba(255,255,255,0.3)"
-                                //outlined={String(colors.white)}
-                                onPress={() => { handleSave(); }}>
-                                <Ionicons
-                                    size={36}
-                                    name="ios-checkmark"
-                                    color={colors.white}
-                                />
-                            </Button>
-                        </Block> */}
+                        <Block row>
+                            <Block align='flex-start'>
+                                <Button
+                                    shadow={false}
+                                    radius={sizes.m}
+                                    color="rgba(255,255,255,0.7)"
+                                    //outlined={String(colors.white)}
+                                    onPress={() => { handleDelete() }}>
+                                    <Ionicons
+                                        size={32}
+                                        name="trash"
+                                        color={colors.danger}
+                                    />
+                                </Button>
+                            </Block>
+                            <Block align='flex-end'>
+                                <Button
+                                    shadow={false}
+                                    radius={sizes.m}
+                                    color="rgba(255,255,255,0.3)"
+                                    outlined={String(colors.white)}
+                                    onPress={() => { setNameDlVisible(true); setNewPersonName(''); }}>
+                                    <Ionicons
+                                        size={30}
+                                        name="person-add"
+                                        color={colors.white}
+                                    />
+                                </Button>
+                            </Block>
+                        </Block>
                     </Image>
                 </Block>
             </Block >
             <Modal visible={showModal} onRequestClose={() => setModal(false)}>
                 <FlatList
                     keyExtractor={(index) => `${index}`}
-                    data={userData}
+                    data={userNames}
                     renderItem={({ item, index }) => (
                         <Button
                             marginBottom={sizes.sm}
@@ -233,6 +342,42 @@ const Users = () => {
                     )}
                 />
             </Modal>
+            <Dialog.Container visible={nameDlVisible}>
+                <Dialog.Title style={{ color: "#000000" }}>Add person</Dialog.Title>
+                <Dialog.Description>Please enter the name.</Dialog.Description>
+                <Dialog.Input
+                    placeholder='Name'
+                    style={{ color: "#000000" }}
+                    onChangeText={(text) => {
+                        setNewPersonName(text);
+                    }} />
+                <Dialog.Button label="Cancel" onPress={handleCancel} />
+                <Dialog.Button label="Next" onPress={() => { setOnTimeDlVisible(true); setNameDlVisible(false); }} />
+            </Dialog.Container>
+            <Dialog.Container visible={onTimeDlVisible}>
+                <Dialog.Title style={{ color: "#000000" }}>Add person</Dialog.Title>
+                <Dialog.Description>Please enter the on time.</Dialog.Description>
+                <Dialog.Input
+                    placeholder='On Time'
+                    style={{ color: "#000000" }}
+                    onChangeText={(text) => {
+                        setNewOnTime(Number(text));
+                    }} />
+                <Dialog.Button label="Cancel" onPress={handleCancel} />
+                <Dialog.Button label="Next" onPress={() => { setOffTimeDlVisible(true); setOnTimeDlVisible(false); }} />
+            </Dialog.Container>
+            <Dialog.Container visible={offTimeDlVisible}>
+                <Dialog.Title style={{ color: "#000000" }}>Add person</Dialog.Title>
+                <Dialog.Description>Please enter the off time.</Dialog.Description>
+                <Dialog.Input
+                    placeholder='Off Time'
+                    style={{ color: "#000000" }}
+                    onChangeText={(text) => {
+                        setNewOffTime(Number(text));
+                    }} />
+                <Dialog.Button label="Cancel" onPress={handleCancel} />
+                <Dialog.Button label="Add" onPress={handleAddPerson} />
+            </Dialog.Container>
         </Block >
     );
 };

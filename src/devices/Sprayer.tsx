@@ -86,7 +86,6 @@ const Sprayer = () => {
     }, []);
 
     const initData = () => {
-        console.log(userConfig);
         while (userData.length > 0) {
             userData.pop();
         }
@@ -95,7 +94,6 @@ const Sprayer = () => {
             userData.push(user.name);
         })
         setQuantity(userConfig.users[0].name);
-        console.log(userData);
     }
 
     const fetchUserData = async () => {
@@ -108,7 +106,6 @@ const Sprayer = () => {
                     const data = JSON.parse(res);
                     userConfig = data;
                     initData();
-                    console.log("userData: ", userConfig.users[1].onTime);
                 })
                 .catch((err) => {
                     console.log(err.message, err.code);
@@ -200,6 +197,36 @@ const Sprayer = () => {
 
     }
 
+    const onChangeBrightness = async (toChange: string) => {
+
+        let formatValue = Buffer.from("B").toString("base64");;
+        if (toChange == 'plus')
+            formatValue = Buffer.from("+").toString("base64");
+        else if (toChange == 'minus')
+            formatValue = Buffer.from("-").toString("base64");
+
+        const services = await sprayer.services();
+        for (const service of services) {
+            const characteristics = await service.characteristics();
+            for (const characteristic of characteristics) {
+                if (characteristic.isWritableWithResponse) {
+                    // get writing service id
+                    writeServiceId = service.uuid;
+                    writeCharId = characteristic.uuid;
+                    console.log("serviceID: ", writeServiceId);
+                    console.log("charcteristicID: ", writeCharId);
+                }
+            }
+        }
+        bleManager.writeCharacteristicWithResponseForDevice(
+            sprayer.id,
+            writeServiceId,
+            writeCharId,
+            formatValue
+        );
+
+    }
+
     return (
         <Block safe marginTop={sizes.md}>
             <Block
@@ -245,7 +272,8 @@ const Sprayer = () => {
                                     radius={sizes.m}
                                     marginHorizontal={sizes.l}
                                     color="rgba(255,255,255,0.2)"
-                                    outlined={String(colors.white)}>
+                                    outlined={String(colors.white)}
+                                    onPress={() => { onChangeBrightness('minus') }}>
                                     <Ionicons
                                         size={18}
                                         name="remove"
@@ -257,7 +285,8 @@ const Sprayer = () => {
                                     radius={sizes.m}
                                     marginHorizontal={sizes.l}
                                     color="rgba(255,255,255,0.2)"
-                                    outlined={String(colors.white)}>
+                                    outlined={String(colors.white)}
+                                    onPress={() => { onChangeBrightness('plus') }}>
                                     <Ionicons
                                         size={18}
                                         name="add"
