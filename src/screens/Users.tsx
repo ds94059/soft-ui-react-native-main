@@ -3,6 +3,7 @@ import { Linking, StatusBar, View, FlatList, Alert } from 'react-native';
 import * as RNFS from 'react-native-fs';
 import Dialog from "react-native-dialog";
 import { useNavigation } from '@react-navigation/core';
+import { useIsFocused } from "@react-navigation/native";
 import { Ionicons } from '@expo/vector-icons';
 
 import { Block, Button, Image, Text, Modal, Input } from '../components/';
@@ -20,19 +21,15 @@ interface IUser {
 const Users = () => {
     const { users } = useData();
     const { assets, colors, gradients, sizes } = useTheme();
+    const isFocused = useIsFocused();
     const { t } = useTranslation();
     const navigation = useNavigation();
     const [showModal, setModal] = useState(false);
-    const [userData, setuserData] = useState<IUser[]>([{
-        id: 0,
-        name: userConfig.users[0].name,
-        onTime: userConfig.users[0].onTime,
-        offTime: userConfig.users[0].offTime
-    }]);
-    const [quantity, setQuantity] = useState(userData[0].name);
-    const [userNames, setuserNames] = useState([userData[0].name]);
-    const [onTime, setonTime] = useState(userData[0].onTime);
-    const [offTime, setoffTime] = useState(userData[0].offTime);
+    const [userData, setuserData] = useState<IUser[]>([]);
+    const [quantity, setQuantity] = useState("");
+    const [userNames, setuserNames] = useState<String[]>([]);
+    const [onTime, setonTime] = useState(0);
+    const [offTime, setoffTime] = useState(0);
     const [nameDlVisible, setNameDlVisible] = useState(false);
     const [onTimeDlVisible, setOnTimeDlVisible] = useState(false);
     const [offTimeDlVisible, setOffTimeDlVisible] = useState(false);
@@ -62,11 +59,20 @@ const Users = () => {
         while (userNames.length > 0) {
             userNames.pop();
         }
-
         userData.forEach((user) => {
             userNames.push(user.name);
         })
-        console.log(userNames);
+
+        if (userData.length == 0) {
+            setQuantity("None");
+            setonTime(0);
+            setoffTime(0);
+        }
+        else {
+            setQuantity(userData[0].name);
+            setonTime(userData[0].onTime);
+            setoffTime(userData[0].offTime);
+        }
     }
 
     const handleEditonTime = (time: number) => {
@@ -104,6 +110,7 @@ const Users = () => {
         setNameDlVisible(false);
         setOnTimeDlVisible(false);
         setOffTimeDlVisible(false);
+        console.log("Cancel Pressed");
     }
 
     const handleDelete = () => {
@@ -133,7 +140,13 @@ const Users = () => {
                             setonTime(userData[0].onTime);
                             setoffTime(userData[0].offTime);
                         }
-                        ///handleSave();
+                        else {
+                            setIdx(0);
+                            setQuantity("");
+                            setonTime(0);
+                            setoffTime(0);
+                        }
+                        handleSave();
                     }
                 }
             ]
@@ -144,6 +157,11 @@ const Users = () => {
 
     const handleAddPerson = () => {
         setOffTimeDlVisible(false);
+        if (newPersonName == "" || newOnTime == 0 || newOffTime == 0) {
+            Alert.alert("Error", "Parameter missed!");
+            return;
+        }
+
         console.log(newPersonName);
         console.log(newOnTime);
         console.log(newOffTime);
@@ -159,16 +177,18 @@ const Users = () => {
         setonTime(userData[index].onTime);
         setoffTime(userData[index].offTime);
 
-        //handleSave();
+        handleSave();
     }
 
     useEffect(() => {
-        initData();
-        StatusBar.setBarStyle('light-content');
-        return () => {
-            StatusBar.setBarStyle('dark-content');
-        };
-    }, []);
+        if (isFocused) {
+            initData();
+            StatusBar.setBarStyle('light-content');
+            return () => {
+                StatusBar.setBarStyle('dark-content');
+            };
+        }
+    }, [isFocused]);
 
     return (
         <Block safe marginTop={sizes.md}>

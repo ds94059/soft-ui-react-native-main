@@ -1,5 +1,6 @@
 import React, { useCallback, useState, useEffect } from 'react';
 import { PermissionsAndroid, Alert } from 'react-native';
+import { useIsFocused } from "@react-navigation/native";
 import { BleManager, State, ScanMode, Device } from 'react-native-ble-plx';
 
 import { useData, useTheme, useTranslation } from '../hooks/';
@@ -86,6 +87,7 @@ const Home = () => {
     const { assets, colors, fonts, gradients, sizes } = useTheme();
     const [categories, setCategories] = useState<ICategory[]>([]);
     const [selected, setSelected] = useState<ICategory>();
+    const isFocused = useIsFocused();
 
     const handleProducts = useCallback(
         (tab: number) => {
@@ -103,8 +105,9 @@ const Home = () => {
     }
 
     useEffect(() => {
-        requestBlePermission();
-    })
+        if (isFocused)
+            requestBlePermission();
+    }, [isFocused]);
 
     // init articles
     useEffect(() => {

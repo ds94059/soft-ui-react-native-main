@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Linking, StatusBar, View, Alert, FlatList, PermissionsAndroid } from 'react-native';
+import Slider from '@react-native-community/slider';
 import * as RNFS from 'react-native-fs';
 import { useNavigation } from '@react-navigation/core';
+import { useIsFocused } from "@react-navigation/native";
 import { Ionicons } from '@expo/vector-icons';
 global.Buffer = global.Buffer || require('buffer').Buffer
 
@@ -12,6 +14,13 @@ import { bleManager, sprayer } from '../screens/Home';
 
 
 export let userConfig: any;
+
+// define writing service id
+const writeServiceId = "19B10000-E8F2-537E-4F6C-D104768A1214";
+const writeByteCharId = "19B10001-E8F2-537E-4F6C-D104768A1214";
+const writeStringCharId = "19B10001-E8F2-537E-4F6C-D104768A1215";
+let readServiceId = "";
+let readCharId = "";
 
 // request storage permission
 const requestStoragePermission = async () => {
@@ -29,7 +38,7 @@ const requestStoragePermission = async () => {
             }
         );
         if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-            console.log("granted1");
+            console.log("Read permission ok.");
 
             const grant = await PermissionsAndroid.request(
                 PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
@@ -44,7 +53,7 @@ const requestStoragePermission = async () => {
                 }
             );
             if (grant === PermissionsAndroid.RESULTS.GRANTED) {
-                console.log("granted2");
+                console.log("Write permission ok.");
 
             } else {
                 console.log("Storage permission denied");
@@ -62,11 +71,13 @@ const Sprayer = () => {
     const { assets, colors, gradients, sizes } = useTheme();
     const { t } = useTranslation();
     const navigation = useNavigation();
+    const isFocused = useIsFocused();
     const [switch1, setSwitch1] = useState(false);
     const [showModal, setModal] = useState(false);
     const [quantity, setQuantity] = useState("");
-    const [userData, setuserData] = useState([""]);
-    const [selectedIdx, setIdx] = useState(0);
+    const [userData, setUserData] = useState([""]);
+    const [selectedIdx, setIndex] = useState(0);
+    const [brightness, setBrightness] = useState(0);
 
     useEffect(() => {
         StatusBar.setBarStyle('light-content');
@@ -77,13 +88,15 @@ const Sprayer = () => {
 
     useEffect(() => {
         const fetchDevice = async () => {
-            console.log(sprayer.name);
+            await requestStoragePermission();
+            //console.log(sprayer.name);
+            fetchUserData();
         }
-
-        fetchDevice().catch(console.error);
-        const permit = requestStoragePermission();
-        fetchUserData();
-    }, []);
+        if (isFocused) {
+            fetchDevice().catch(console.error);
+            //const permit = requestStoragePermission();
+        }
+    }, [isFocused]);
 
     const initData = () => {
         while (userData.length > 0) {
@@ -93,7 +106,43 @@ const Sprayer = () => {
         userConfig.users.forEach((user: any) => {
             userData.push(user.name);
         })
-        setQuantity(userConfig.users[0].name);
+        if (userData.length == 0)
+            setQuantity("");
+        else
+            setQuantity(userConfig.users[0].name);
+    }
+
+    const setDefaultUsers = () => {
+        const data = {
+            users: [{
+                id: 0,
+                name: "Michael",
+                onTime: 5,
+                offTime: 2,
+            },
+            {
+                id: 1,
+                name: "Jason",
+                onTime: 3,
+                offTime: 1
+            },
+            {
+                id: 2,
+                name: "Vinci",
+                onTime: 2,
+                offTime: 2
+            }]
+        };
+        const path = RNFS.DocumentDirectoryPath + '/data.json';
+        userConfig = data;
+        initData();
+        RNFS.writeFile(path, JSON.stringify(data), 'utf8')
+            .then((success) => {
+                console.log('FILE WRITTEN!');
+            })
+            .catch((err) => {
+                console.log(err.message);
+            });
     }
 
     const fetchUserData = async () => {
@@ -114,16 +163,19 @@ const Sprayer = () => {
         else {
             const data = {
                 users: [{
+                    id: 0,
                     name: "Michael",
                     onTime: 5,
                     offTime: 2,
                 },
                 {
+                    id: 1,
                     name: "Jason",
                     onTime: 3,
                     offTime: 1
                 },
                 {
+                    id: 2,
                     name: "Vinci",
                     onTime: 2,
                     offTime: 2
@@ -141,11 +193,6 @@ const Sprayer = () => {
         }
     }
 
-    // define writing service id
-    let writeServiceId = "";
-    let writeCharId = "";
-    let readServiceId = "";
-    let readCharId = "";
     const handleSwitch = async (switch1: boolean) => {
         setSwitch1(switch1);
 
@@ -154,13 +201,6 @@ const Sprayer = () => {
         for (const service of services) {
             const characteristics = await service.characteristics();
             for (const characteristic of characteristics) {
-                if (characteristic.isWritableWithResponse) {
-                    // get writing service id
-                    writeServiceId = service.uuid;
-                    writeCharId = characteristic.uuid;
-                    console.log("writeServiceId: ", writeServiceId);
-                    console.log("writeCharId: ", writeCharId);
-                }
                 if (characteristic.isReadable) {
                     // get read service id
                     readServiceId = service.uuid;
@@ -175,7 +215,7 @@ const Sprayer = () => {
         if (switch1) {
             try {
                 console.log(selectedIdx);
-                writeData(userConfig.users[selectedIdx].onTime, userConfig.users[selectedIdx].offTime, writeServiceId, writeCharId);
+                writeData(userConfig.users[selectedIdx].onTime, userConfig.users[selectedIdx].offTime, writeServiceId, writeByteCharId);
                 Alert.alert('Sprayer is looping...', 'Sprayer is set as ' + userConfig.users[selectedIdx].onTime + 's on/ ' + userConfig.users[selectedIdx].offTime + 's off.');
             } catch (error) {
                 console.error(error);
@@ -187,44 +227,55 @@ const Sprayer = () => {
             bleManager.writeCharacteristicWithResponseForDevice(
                 sprayer.id,
                 writeServiceId,
-                writeCharId,
+                writeByteCharId,
                 formatValue
             )
-        }
-
-        if (!switch1)
             Alert.alert('Sprayer is not looping.', 'Sprayer loop is off.');
+        }
+    }
 
+    const onChangeBrightness1 = async (bright: number) => {
+        setBrightness(bright);
+        if (bright % 5 != 0)
+            return;
+
+        let formatValue = Buffer.from(bright.toString()).toString("base64");
+
+        bleManager.writeCharacteristicWithResponseForDevice(
+            sprayer.id,
+            writeServiceId,
+            writeStringCharId,
+            formatValue
+        );
     }
 
     const onChangeBrightness = async (toChange: string) => {
 
-        let formatValue = Buffer.from("B").toString("base64");;
-        if (toChange == 'plus')
-            formatValue = Buffer.from("+").toString("base64");
-        else if (toChange == 'minus')
-            formatValue = Buffer.from("-").toString("base64");
+        let formatValue = Buffer.from("B").toString("base64");
+        let bright = brightness;
 
-        const services = await sprayer.services();
-        for (const service of services) {
-            const characteristics = await service.characteristics();
-            for (const characteristic of characteristics) {
-                if (characteristic.isWritableWithResponse) {
-                    // get writing service id
-                    writeServiceId = service.uuid;
-                    writeCharId = characteristic.uuid;
-                    console.log("serviceID: ", writeServiceId);
-                    console.log("charcteristicID: ", writeCharId);
-                }
-            }
+        if (toChange == 'plus') {
+            if (bright + 5 > 100)
+                bright = 100;
+            else
+                bright += 5;
+            formatValue = Buffer.from(bright.toString()).toString("base64");
         }
+        else if (toChange == 'minus') {
+            if (bright - 5 < 0)
+                bright = 0;
+            else
+                bright -= 5;
+            formatValue = Buffer.from(bright.toString()).toString("base64");
+        }
+        setBrightness(bright);
+
         bleManager.writeCharacteristicWithResponseForDevice(
             sprayer.id,
             writeServiceId,
-            writeCharId,
+            writeStringCharId,
             formatValue
         );
-
     }
 
     return (
@@ -266,11 +317,10 @@ const Sprayer = () => {
                                 marginBottom={sizes.sm}
                                 source={require('../assets/images/sprayer.png')}
                             />
-                            <Block row marginVertical={sizes.m}>
+                            <Block row marginVertical={sizes.sm} justify="center" paddingVertical={sizes.s}>
                                 <Button
                                     shadow={false}
                                     radius={sizes.m}
-                                    marginHorizontal={sizes.l}
                                     color="rgba(255,255,255,0.2)"
                                     outlined={String(colors.white)}
                                     onPress={() => { onChangeBrightness('minus') }}>
@@ -280,10 +330,23 @@ const Sprayer = () => {
                                         color={colors.white}
                                     />
                                 </Button>
+                                <Slider
+                                    style={{ width: "65%", }}
+                                    thumbTintColor={"#ffffff"}
+                                    // maximumTrackTintColor={"#ffffff"}
+                                    minimumTrackTintColor={"#ffffff"}
+                                    minimumValue={0}
+                                    maximumValue={100}
+                                    onValueChange={(bright) => { onChangeBrightness1(Number(bright.toFixed(0))) }}
+                                    value={brightness}
+                                    tapToSeek
+                                />
+                                <Text white position='absolute' >
+                                    {brightness}
+                                </Text>
                                 <Button
                                     shadow={false}
                                     radius={sizes.m}
-                                    marginHorizontal={sizes.l}
                                     color="rgba(255,255,255,0.2)"
                                     outlined={String(colors.white)}
                                     onPress={() => { onChangeBrightness('plus') }}>
@@ -359,6 +422,18 @@ const Sprayer = () => {
                                     </Block>
                                 </Button>
                             </Block>
+                            <Button
+                                shadow={false}
+                                radius={sizes.m}
+                                color="rgba(255,255,255,0.2)"
+                                outlined={String(colors.white)}
+                                onPress={setDefaultUsers}>
+                                <Ionicons
+                                    size={18}
+                                    name="refresh"
+                                    color={colors.white}
+                                />
+                            </Button>
                         </Block>
                     </Image>
                 </Block>
@@ -373,7 +448,7 @@ const Sprayer = () => {
                             onPress={() => {
                                 setQuantity(item);
                                 setModal(false);
-                                setIdx(index);
+                                setIndex(index);
                             }}>
                             <Text p white semibold>
                                 {item}
