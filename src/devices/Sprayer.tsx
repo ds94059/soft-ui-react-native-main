@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Linking, StatusBar, View, Alert, FlatList, PermissionsAndroid } from 'react-native';
+import { Linking, StatusBar, View, Alert, FlatList, PermissionsAndroid, TouchableOpacity, Pressable } from 'react-native';
 import Slider from '@react-native-community/slider';
 import * as RNFS from 'react-native-fs';
 import { useNavigation } from '@react-navigation/core';
@@ -12,15 +12,16 @@ import { useData, useTheme, useTranslation } from '../hooks/';
 import { color } from 'react-native-reanimated';
 import { bleManager, sprayer } from '../screens/Home';
 
-
 export let userConfig: any;
 
 // define writing service id
-const writeServiceId = "19B10000-E8F2-537E-4F6C-D104768A1214";
-const writeByteCharId = "19B10001-E8F2-537E-4F6C-D104768A1214";
-const writeStringCharId = "19B10001-E8F2-537E-4F6C-D104768A1215";
-let readServiceId = "";
-let readCharId = "";
+const SERVICE_ID = "19B10000-E8F2-537E-4F6C-D104768A1214";
+const WRITE_BYTE_CHAR_ID = "19B10001-E8F2-537E-4F6C-D104768A1214";
+const WRITE_STRING_CHAR_ID = "19B10001-E8F2-537E-4F6C-D104768A1215";
+let READ_SERVICE_ID = "";
+let READ_CHAR_ID = "";
+
+let loopId: NodeJS.Timeout;
 
 // request storage permission
 const requestStoragePermission = async () => {
@@ -78,6 +79,7 @@ const Sprayer = () => {
     const [userData, setUserData] = useState([""]);
     const [selectedIdx, setIndex] = useState(0);
     const [brightness, setBrightness] = useState(0);
+    const [sprayerSrc, setSprayerSrc] = useState(require('../assets/images/sprayer.png'));
 
     useEffect(() => {
         StatusBar.setBarStyle('light-content');
@@ -89,12 +91,11 @@ const Sprayer = () => {
     useEffect(() => {
         const fetchDevice = async () => {
             await requestStoragePermission();
-            //console.log(sprayer.name);
             fetchUserData();
         }
+        clearInterval(loopId);
         if (isFocused) {
             fetchDevice().catch(console.error);
-            //const permit = requestStoragePermission();
         }
     }, [isFocused]);
 
@@ -197,25 +198,29 @@ const Sprayer = () => {
         setSwitch1(switch1);
 
         // get service and characteristic id
-        const services = await sprayer.services();
-        for (const service of services) {
-            const characteristics = await service.characteristics();
-            for (const characteristic of characteristics) {
-                if (characteristic.isReadable) {
-                    // get read service id
-                    readServiceId = service.uuid;
-                    readCharId = characteristic.uuid;
-                    console.log("readServiceId: ", readServiceId);
-                    console.log("readCharId", readCharId);
+        try {
+            const services = await sprayer.services();
+            for (const service of services) {
+                const characteristics = await service.characteristics();
+                for (const characteristic of characteristics) {
+                    if (characteristic.isReadable) {
+                        // get read service id
+                        READ_SERVICE_ID = service.uuid;
+                        READ_CHAR_ID = characteristic.uuid;
+                        console.log("readServiceId: ", READ_SERVICE_ID);
+                        console.log("readCharId", READ_CHAR_ID);
+                    }
                 }
             }
+        } catch (error) {
+            console.error(error);
         }
         let formatValue;
 
         if (switch1) {
+            loopSprayerPicture(true);
             try {
-                console.log(selectedIdx);
-                writeData(userConfig.users[selectedIdx].onTime, userConfig.users[selectedIdx].offTime, writeServiceId, writeByteCharId);
+                writeData(userConfig.users[selectedIdx].onTime, userConfig.users[selectedIdx].offTime, SERVICE_ID, WRITE_BYTE_CHAR_ID);
                 Alert.alert('Sprayer is looping...', 'Sprayer is set as ' + userConfig.users[selectedIdx].onTime + 's on/ ' + userConfig.users[selectedIdx].offTime + 's off.');
             } catch (error) {
                 console.error(error);
@@ -223,14 +228,28 @@ const Sprayer = () => {
 
         }
         else {
+            loopSprayerPicture(false);
             formatValue = Buffer.from("B").toString("base64");
             bleManager.writeCharacteristicWithResponseForDevice(
                 sprayer.id,
-                writeServiceId,
-                writeByteCharId,
+                SERVICE_ID,
+                WRITE_BYTE_CHAR_ID,
                 formatValue
             )
             Alert.alert('Sprayer is not looping.', 'Sprayer loop is off.');
+        }
+    }
+
+    const loopSprayerPicture = async (trigger: boolean) => {
+        if (trigger) {
+            loopId = setInterval(() => {
+                setSprayerSrc(require('../assets/images/sprayer_1.png'));
+                setTimeout(() => { setSprayerSrc(require('../assets/images/sprayer_2.png')) }, 500);
+                setTimeout(() => { setSprayerSrc(require('../assets/images/sprayer.png')) }, 1000);
+            }, 1500)
+        }
+        else {
+            clearInterval(loopId);
         }
     }
 
@@ -243,8 +262,8 @@ const Sprayer = () => {
 
         bleManager.writeCharacteristicWithResponseForDevice(
             sprayer.id,
-            writeServiceId,
-            writeStringCharId,
+            SERVICE_ID,
+            WRITE_STRING_CHAR_ID,
             formatValue
         );
     }
@@ -272,8 +291,8 @@ const Sprayer = () => {
 
         bleManager.writeCharacteristicWithResponseForDevice(
             sprayer.id,
-            writeServiceId,
-            writeStringCharId,
+            SERVICE_ID,
+            WRITE_STRING_CHAR_ID,
             formatValue
         );
     }
@@ -315,7 +334,7 @@ const Sprayer = () => {
                                 width={350}
                                 height={350}
                                 marginBottom={sizes.sm}
-                                source={require('../assets/images/sprayer.png')}
+                                source={sprayerSrc}
                             />
                             <Block row marginVertical={sizes.sm} justify="center" paddingVertical={sizes.s}>
                                 <Button
@@ -457,7 +476,6 @@ const Sprayer = () => {
                     )}
                 />
             </Modal>
-
         </Block >
     );
 };

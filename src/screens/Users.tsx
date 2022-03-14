@@ -5,6 +5,7 @@ import Dialog from "react-native-dialog";
 import { useNavigation } from '@react-navigation/core';
 import { useIsFocused } from "@react-navigation/native";
 import { Ionicons } from '@expo/vector-icons';
+import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 
 import { Block, Button, Image, Text, Modal, Input } from '../components/';
 import { useData, useTheme, useTranslation } from '../hooks/';
@@ -27,7 +28,7 @@ const Users = () => {
     const [showModal, setModal] = useState(false);
     const [userData, setuserData] = useState<IUser[]>([]);
     const [quantity, setQuantity] = useState("");
-    const [userNames, setuserNames] = useState<String[]>([]);
+    const [userNames, setuserNames] = useState<string[]>([]);
     const [onTime, setonTime] = useState(0);
     const [offTime, setoffTime] = useState(0);
     const [nameDlVisible, setNameDlVisible] = useState(false);
@@ -155,8 +156,14 @@ const Users = () => {
 
     }
 
-    const handleAddPerson = () => {
+    const handleAddPerson = async () => {
         setOffTimeDlVisible(false);
+        const result = await launchImageLibrary({
+            mediaType: 'photo',
+            maxHeight: 350,
+            maxWidth: 350
+        });
+
         if (newPersonName == "" || newOnTime == 0 || newOffTime == 0) {
             Alert.alert("Error", "Parameter missed!");
             return;
