@@ -18,3 +18,4 @@ export { default as Settings } from './Pro';
 export { default as Shopping } from './Pro';
 export { default as Pro } from './Pro';
 export { default as Users } from './Users';
+export { default as AddUser } from './AddUser';

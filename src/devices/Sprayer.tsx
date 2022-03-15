@@ -80,6 +80,7 @@ const Sprayer = () => {
     const [selectedIdx, setIndex] = useState(0);
     const [brightness, setBrightness] = useState(0);
     const [sprayerSrc, setSprayerSrc] = useState(require('../assets/images/sprayer.png'));
+    const { users } = useData();
 
     useEffect(() => {
         StatusBar.setBarStyle('light-content');
@@ -120,18 +121,21 @@ const Sprayer = () => {
                 name: "Michael",
                 onTime: 5,
                 offTime: 2,
+                imageSrc: { uri: users[0].avatar }
             },
             {
                 id: 1,
                 name: "Jason",
                 onTime: 3,
-                offTime: 1
+                offTime: 1,
+                imageSrc: { uri: users[5].avatar }
             },
             {
                 id: 2,
                 name: "Vinci",
                 onTime: 2,
-                offTime: 2
+                offTime: 2,
+                imageSrc: { uri: users[2].avatar }
             }]
         };
         const path = RNFS.DocumentDirectoryPath + '/data.json';
@@ -168,18 +172,21 @@ const Sprayer = () => {
                     name: "Michael",
                     onTime: 5,
                     offTime: 2,
+                    imageSrc: { uri: users[0].avatar }
                 },
                 {
                     id: 1,
                     name: "Jason",
                     onTime: 3,
-                    offTime: 1
+                    offTime: 1,
+                    imageSrc: { uri: users[5].avatar }
                 },
                 {
                     id: 2,
                     name: "Vinci",
                     onTime: 2,
-                    offTime: 2
+                    offTime: 2,
+                    imageSrc: { uri: users[2].avatar }
                 }]
             };
             userConfig = data;
@@ -218,9 +225,10 @@ const Sprayer = () => {
         let formatValue;
 
         if (switch1) {
-            loopSprayerPicture(true);
+            const onTime = userConfig.users[selectedIdx].onTime, offTime = userConfig.users[selectedIdx].offTime;
+            loopSprayerPicture(true, onTime, offTime);
             try {
-                writeData(userConfig.users[selectedIdx].onTime, userConfig.users[selectedIdx].offTime, SERVICE_ID, WRITE_BYTE_CHAR_ID);
+                writeData(onTime, offTime, SERVICE_ID, WRITE_BYTE_CHAR_ID);
                 Alert.alert('Sprayer is looping...', 'Sprayer is set as ' + userConfig.users[selectedIdx].onTime + 's on/ ' + userConfig.users[selectedIdx].offTime + 's off.');
             } catch (error) {
                 console.error(error);
@@ -240,13 +248,24 @@ const Sprayer = () => {
         }
     }
 
-    const loopSprayerPicture = async (trigger: boolean) => {
-        if (trigger) {
-            loopId = setInterval(() => {
-                setSprayerSrc(require('../assets/images/sprayer_1.png'));
-                setTimeout(() => { setSprayerSrc(require('../assets/images/sprayer_2.png')) }, 500);
-                setTimeout(() => { setSprayerSrc(require('../assets/images/sprayer.png')) }, 1000);
-            }, 1500)
+    const loopSprayerPicture = async (trigger: boolean, onTime?: number, offTime?: number) => {
+        if (trigger && onTime && offTime) {
+            const loop = function () {
+                let timeoutId: NodeJS.Timeout;
+                const loop2 = function () {
+                    setSprayerSrc(require('../assets/images/sprayer_1.png'));
+                    timeoutId = setTimeout(() => { setSprayerSrc(require('../assets/images/sprayer_2.png')) }, 500);
+                    return loop2;
+                }
+                const loopId2 = setInterval(loop2(), 1000)
+                setTimeout(() => {
+                    clearInterval(loopId2);
+                    clearTimeout(timeoutId);
+                    setSprayerSrc(require('../assets/images/sprayer.png'));
+                }, onTime * 1000);
+                return loop;
+            }
+            loopId = setInterval(loop(), (onTime + offTime) * 1000);
         }
         else {
             clearInterval(loopId);
@@ -448,8 +467,8 @@ const Sprayer = () => {
                                 outlined={String(colors.white)}
                                 onPress={setDefaultUsers}>
                                 <Ionicons
-                                    size={18}
-                                    name="refresh"
+                                    size={30}
+                                    name="download-outline"
                                     color={colors.white}
                                 />
                             </Button>

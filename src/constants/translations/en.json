@@ -120,6 +120,9 @@
       "title": "Sprayer",
       "setting": {
         "title": "Users setting"
+      },
+      "adduser": {
+        "title": "Add User"
       }
     },
     "fan": {

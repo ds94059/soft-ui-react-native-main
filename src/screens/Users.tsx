@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState, useRef } from 'react';
-import { Linking, StatusBar, View, FlatList, Alert } from 'react-native';
+import { Linking, StatusBar, View, FlatList, Alert, ImageSourcePropType } from 'react-native';
 import * as RNFS from 'react-native-fs';
 import Dialog from "react-native-dialog";
 import { useNavigation } from '@react-navigation/core';
@@ -10,17 +10,16 @@ import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { Block, Button, Image, Text, Modal, Input } from '../components/';
 import { useData, useTheme, useTranslation } from '../hooks/';
 import { userConfig } from '../devices/Sprayer';
-import { toNumber } from 'i18n-js';
 
 interface IUser {
     id: number | string;
     name: string;
     onTime: number;
     offTime: number;
+    imageSrc: ImageSourcePropType;
 }
 
 const Users = () => {
-    const { users } = useData();
     const { assets, colors, gradients, sizes } = useTheme();
     const isFocused = useIsFocused();
     const { t } = useTranslation();
@@ -31,30 +30,17 @@ const Users = () => {
     const [userNames, setuserNames] = useState<string[]>([]);
     const [onTime, setonTime] = useState(0);
     const [offTime, setoffTime] = useState(0);
-    const [nameDlVisible, setNameDlVisible] = useState(false);
-    const [onTimeDlVisible, setOnTimeDlVisible] = useState(false);
-    const [offTimeDlVisible, setOffTimeDlVisible] = useState(false);
-    const [newPersonName, setNewPersonName] = useState("");
-    const [newOnTime, setNewOnTime] = useState(0);
-    const [newOffTime, setNewOffTime] = useState(0);
-
-    const imgData = [
-        { uri: users[0].avatar },
-        { uri: users[5].avatar },
-        { uri: users[2].avatar },
-        { uri: users[3].avatar },
-        { uri: users[4].avatar },
-        { uri: users[5].avatar },
-    ]
+    const [onTimeDanger, setOnTimeDanger] = useState(false);
+    const [offTimeDanger, setOffTimeDanger] = useState(false);
     const [selectedIdx, setIdx] = useState(0);
-    const [imageSrc, setImageSrc] = useState(imgData[0]);
+    const [imageSrc, setImageSrc] = useState(require('../assets/images/user.png'));
 
     const initData = () => {
         while (userData.length > 0) {
             userData.pop();
         }
         userConfig.users.forEach((user: any, index: number) => {
-            userData.push({ id: index, name: user.name, onTime: user.onTime, offTime: user.offTime });
+            userData.push({ id: index, name: user.name, onTime: user.onTime, offTime: user.offTime, imageSrc: user.imageSrc });
         })
 
         while (userNames.length > 0) {
@@ -70,22 +56,49 @@ const Users = () => {
             setoffTime(0);
         }
         else {
-            setQuantity(userData[0].name);
-            setonTime(userData[0].onTime);
-            setoffTime(userData[0].offTime);
+            setQuantity(userData[selectedIdx].name);
+            setonTime(userData[selectedIdx].onTime);
+            setoffTime(userData[selectedIdx].offTime);
+            setImageSrc(userData[selectedIdx].imageSrc);
         }
     }
 
-    const handleEditonTime = (time: number) => {
-        setonTime(time);
-        userData[selectedIdx].onTime = time;
+    const handleEditTime = (option: string, time: number) => {
+        if (isNaN(time)) {
+            Alert.alert("Syntax Error", "Please enter 0~9.");
+            return;
+        }
+        if (time < 0)
+            time = 0;
+        else if (time > 9)
+            time = 9;
+
+        if (option == "on-time") {
+            setonTime(time);
+            userData[selectedIdx].onTime = time;
+        }
+        else if (option == "off-time") {
+            setoffTime(time);
+            userData[selectedIdx].offTime = time;
+        }
         handleSave();
     }
 
-    const handleEditoffTime = (time: number) => {
-        setoffTime(time);
-        userData[selectedIdx].offTime = time;
-        handleSave();
+    const handleChangeTime = (option: string, text: string) => {
+        const time = Number(text);
+
+        if (option == "on-time") {
+            if (isNaN(time) || time < 0 || time > 9)
+                setOnTimeDanger(true);
+            else
+                setOnTimeDanger(false);
+        }
+        else if (option == "off-time") {
+            if (isNaN(time) || time < 0 || time > 9)
+                setOffTimeDanger(true);
+            else
+                setOffTimeDanger(false);
+        }
     }
 
     const handleSave = () => {
@@ -94,9 +107,8 @@ const Users = () => {
 
         userConfig.users = [];
         userData.forEach((user: IUser, index: number) => {
-            userConfig.users.push({ name: user.name, onTime: user.onTime, offTime: user.offTime });
+            userConfig.users.push({ name: user.name, onTime: user.onTime, offTime: user.offTime, imageSrc: user.imageSrc });
         });
-        console.log(userData);
 
         RNFS.writeFile(path, JSON.stringify(userConfig), 'utf8')
             .then((success) => {
@@ -105,13 +117,6 @@ const Users = () => {
             .catch((err) => {
                 console.log(err.message);
             });
-    }
-
-    const handleCancel = () => {
-        setNameDlVisible(false);
-        setOnTimeDlVisible(false);
-        setOffTimeDlVisible(false);
-        console.log("Cancel Pressed");
     }
 
     const handleDelete = () => {
@@ -137,54 +142,22 @@ const Users = () => {
                         if (userData.length > 0) {
                             setIdx(0);
                             setQuantity(userData[0].name);
-                            setImageSrc(imgData[0]);
                             setonTime(userData[0].onTime);
                             setoffTime(userData[0].offTime);
+                            setImageSrc(userData[0].imageSrc);
                         }
                         else {
                             setIdx(0);
                             setQuantity("");
                             setonTime(0);
                             setoffTime(0);
+                            setImageSrc({});
                         }
                         handleSave();
                     }
                 }
             ]
         );
-
-
-    }
-
-    const handleAddPerson = async () => {
-        setOffTimeDlVisible(false);
-        const result = await launchImageLibrary({
-            mediaType: 'photo',
-            maxHeight: 350,
-            maxWidth: 350
-        });
-
-        if (newPersonName == "" || newOnTime == 0 || newOffTime == 0) {
-            Alert.alert("Error", "Parameter missed!");
-            return;
-        }
-
-        console.log(newPersonName);
-        console.log(newOnTime);
-        console.log(newOffTime);
-        const toPush: IUser = { id: userData.length, name: newPersonName, onTime: newOnTime, offTime: newOffTime };
-        userData.push(toPush);
-
-        userNames.push(newPersonName);
-
-        const index = userData.length - 1;
-        setIdx(index);
-        setQuantity(userData[index].name);
-        setImageSrc(imgData[index]);
-        setonTime(userData[index].onTime);
-        setoffTime(userData[index].offTime);
-
-        handleSave();
     }
 
     useEffect(() => {
@@ -246,7 +219,7 @@ const Users = () => {
                                         if (selectedIdx > 0) {
                                             setIdx(selectedIdx - 1);
                                             setQuantity(userData[selectedIdx - 1].name);
-                                            setImageSrc(imgData[selectedIdx - 1]);
+                                            setImageSrc(userData[selectedIdx - 1].imageSrc);
                                             setonTime(userData[selectedIdx - 1].onTime);
                                             setoffTime(userData[selectedIdx - 1].offTime);
                                         }
@@ -289,7 +262,7 @@ const Users = () => {
                                         if (selectedIdx < userNames.length - 1) {
                                             setIdx(selectedIdx + 1);
                                             setQuantity(userData[selectedIdx + 1].name);
-                                            setImageSrc(imgData[selectedIdx + 1]);
+                                            setImageSrc(userData[selectedIdx + 1].imageSrc);
                                             setonTime(userData[selectedIdx + 1].onTime);
                                             setoffTime(userData[selectedIdx + 1].offTime);
                                         }
@@ -304,13 +277,31 @@ const Users = () => {
                         </Block>
                         <Block row align="center" justify="center">
                             <Block flex={0.3}>
-                                <Input white placeholder="0~9" marginBottom={sizes.sm} textAlign="center" defaultValue={onTime.toString()} onEndEditing={(e) => { handleEditonTime(Number(e.nativeEvent.text)) }} />
+                                <Input
+                                    white
+                                    placeholder="0~9"
+                                    marginBottom={sizes.sm}
+                                    textAlign="center"
+                                    defaultValue={onTime.toString()}
+                                    danger={onTimeDanger}
+                                    onChangeText={(text) => { handleChangeTime("on-time", text) }}
+                                    onEndEditing={(e) => { handleEditTime("on-time", Number(e.nativeEvent.text)) }}
+                                />
                             </Block>
                             <Text white bold marginHorizontal={sizes.s}>s     On</Text>
                         </Block>
                         <Block row align="center" justify="center">
                             <Block flex={0.3}>
-                                <Input white placeholder="0~9" marginBottom={sizes.sm} textAlign="center" defaultValue={offTime.toString()} onEndEditing={(e) => { handleEditoffTime(Number(e.nativeEvent.text)) }} />
+                                <Input
+                                    white
+                                    placeholder="0~9"
+                                    marginBottom={sizes.sm}
+                                    textAlign="center"
+                                    defaultValue={offTime.toString()}
+                                    danger={offTimeDanger}
+                                    onChangeText={(text) => { handleChangeTime("off-time", text) }}
+                                    onEndEditing={(e) => { handleEditTime("off-time", Number(e.nativeEvent.text)) }}
+                                />
                             </Block>
                             <Text white bold marginHorizontal={sizes.s}>s     Off</Text>
                         </Block>
@@ -335,7 +326,7 @@ const Users = () => {
                                     radius={sizes.m}
                                     color="rgba(255,255,255,0.3)"
                                     outlined={String(colors.white)}
-                                    onPress={() => { setNameDlVisible(true); setNewPersonName(''); }}>
+                                    onPress={() => navigation.navigate('AddUser')}>
                                     <Ionicons
                                         size={30}
                                         name="person-add"
@@ -358,7 +349,7 @@ const Users = () => {
                                 setIdx(index);
                                 setQuantity(item);
                                 setModal(false);
-                                setImageSrc(imgData[index]);
+                                setImageSrc(userData[index].imageSrc);
                                 setonTime(userConfig.users[index].onTime);
                                 setoffTime(userConfig.users[index].offTime);
                             }}>
@@ -369,42 +360,6 @@ const Users = () => {
                     )}
                 />
             </Modal>
-            <Dialog.Container visible={nameDlVisible}>
-                <Dialog.Title style={{ color: "#000000" }}>Add person</Dialog.Title>
-                <Dialog.Description>Please enter the name.</Dialog.Description>
-                <Dialog.Input
-                    placeholder='Name'
-                    style={{ color: "#000000" }}
-                    onChangeText={(text) => {
-                        setNewPersonName(text);
-                    }} />
-                <Dialog.Button label="Cancel" onPress={handleCancel} />
-                <Dialog.Button label="Next" onPress={() => { setOnTimeDlVisible(true); setNameDlVisible(false); }} />
-            </Dialog.Container>
-            <Dialog.Container visible={onTimeDlVisible}>
-                <Dialog.Title style={{ color: "#000000" }}>Add person</Dialog.Title>
-                <Dialog.Description>Please enter the on time.</Dialog.Description>
-                <Dialog.Input
-                    placeholder='On Time'
-                    style={{ color: "#000000" }}
-                    onChangeText={(text) => {
-                        setNewOnTime(Number(text));
-                    }} />
-                <Dialog.Button label="Cancel" onPress={handleCancel} />
-                <Dialog.Button label="Next" onPress={() => { setOffTimeDlVisible(true); setOnTimeDlVisible(false); }} />
-            </Dialog.Container>
-            <Dialog.Container visible={offTimeDlVisible}>
-                <Dialog.Title style={{ color: "#000000" }}>Add person</Dialog.Title>
-                <Dialog.Description>Please enter the off time.</Dialog.Description>
-                <Dialog.Input
-                    placeholder='Off Time'
-                    style={{ color: "#000000" }}
-                    onChangeText={(text) => {
-                        setNewOffTime(Number(text));
-                    }} />
-                <Dialog.Button label="Cancel" onPress={handleCancel} />
-                <Dialog.Button label="Add" onPress={handleAddPerson} />
-            </Dialog.Container>
         </Block >
     );
 };
