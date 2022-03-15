@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState, useRef } from 'react';
-import { Linking, StatusBar, View, FlatList, Alert, ImageSourcePropType } from 'react-native';
+import { Linking, StatusBar, View, FlatList, Alert, ImageSourcePropType, TouchableWithoutFeedback } from 'react-native';
 import * as RNFS from 'react-native-fs';
 import Dialog from "react-native-dialog";
 import { useNavigation } from '@react-navigation/core';
@@ -34,6 +34,8 @@ const Users = () => {
     const [offTimeDanger, setOffTimeDanger] = useState(false);
     const [selectedIdx, setIdx] = useState(0);
     const [imageSrc, setImageSrc] = useState(require('../assets/images/user.png'));
+    const [renameDlVisible, setRenameDlVisible] = useState(false);
+    const [newName, setNewName] = useState("");
 
     const initData = () => {
         while (userData.length > 0) {
@@ -160,6 +162,38 @@ const Users = () => {
         );
     }
 
+    const changePicture = async () => {
+        const result = await launchImageLibrary({
+            mediaType: 'photo',
+            maxHeight: 1000,
+            maxWidth: 1000
+        });
+        console.log(result);
+        if (result.assets && result.assets[0].uri) {
+            const photoUri = result.assets[0].uri;
+            console.log(photoUri);
+            setImageSrc({ uri: photoUri });
+            userData[selectedIdx].imageSrc = { uri: photoUri };
+            handleSave();
+        }
+        else if (result.didCancel) {
+            console.log("canceled.");
+        }
+        else {
+            Alert.alert("Select photo error", "The photo is possibly null.");
+        }
+    }
+
+    const rename = () => {
+        setRenameDlVisible(false);
+
+        if (newName) {
+            setQuantity(newName);
+            userData[selectedIdx].name = newName;
+            handleSave();
+        }
+    }
+
     useEffect(() => {
         if (isFocused) {
             initData();
@@ -203,12 +237,14 @@ const Users = () => {
                             </Text>
                         </Button>
                         <Block flex={0} align="center">
-                            <Image
-                                width={300}
-                                height={300}
-                                marginBottom={sizes.sm}
-                                source={imageSrc}
-                            />
+                            <TouchableWithoutFeedback onLongPress={changePicture}>
+                                <Image
+                                    width={300}
+                                    height={300}
+                                    marginBottom={sizes.sm}
+                                    source={imageSrc}
+                                />
+                            </TouchableWithoutFeedback>
                             <Block row marginVertical={sizes.m}>
                                 <Button
                                     shadow={false}
@@ -236,6 +272,10 @@ const Users = () => {
                                     row
                                     gradient={gradients.dark}
                                     onPress={() => setModal(true)}
+                                    onLongPress={() => {
+                                        setRenameDlVisible(true);
+                                        setNewName("");
+                                    }}
                                     marginHorizontal={sizes.s}>
                                     <Block
                                         row
@@ -284,6 +324,8 @@ const Users = () => {
                                     textAlign="center"
                                     defaultValue={onTime.toString()}
                                     danger={onTimeDanger}
+                                    keyboardType="number-pad"
+                                    keyboardAppearance="dark"
                                     onChangeText={(text) => { handleChangeTime("on-time", text) }}
                                     onEndEditing={(e) => { handleEditTime("on-time", Number(e.nativeEvent.text)) }}
                                 />
@@ -299,6 +341,7 @@ const Users = () => {
                                     textAlign="center"
                                     defaultValue={offTime.toString()}
                                     danger={offTimeDanger}
+                                    keyboardType="number-pad"
                                     onChangeText={(text) => { handleChangeTime("off-time", text) }}
                                     onEndEditing={(e) => { handleEditTime("off-time", Number(e.nativeEvent.text)) }}
                                 />
@@ -312,7 +355,8 @@ const Users = () => {
                                     radius={sizes.m}
                                     color="rgba(255,255,255,0.7)"
                                     //outlined={String(colors.white)}
-                                    onPress={() => { handleDelete() }}>
+                                    onPress={handleDelete}
+                                >
                                     <Ionicons
                                         size={32}
                                         name="trash"
@@ -360,6 +404,13 @@ const Users = () => {
                     )}
                 />
             </Modal>
+            <Dialog.Container visible={renameDlVisible}>
+                <Dialog.Title style={{ color: "#000000" }}>Rename</Dialog.Title>
+                <Dialog.Description>Enter a new name.</Dialog.Description>
+                <Dialog.Input style={{ color: "#000000" }} onChangeText={(text) => { setNewName(text) }} />
+                <Dialog.Button label="Cancel" onPress={() => { setRenameDlVisible(false) }} />
+                <Dialog.Button label="OK" onPress={rename} />
+            </Dialog.Container>
         </Block >
     );
 };

@@ -123,12 +123,14 @@ const AddUser = () => {
                         padding={sizes.sm}
                         paddingBottom={sizes.l}
                         radius={sizes.cardRadius}
-                        source={assets.background}>
+                        source={assets.background}
+                    >
                         <Button
                             row
                             flex={0}
                             justify="flex-start"
-                            onPress={() => navigation.goBack()}>
+                            onPress={() => navigation.goBack()}
+                        >
                             <Image
                                 radius={0}
                                 width={10}
@@ -153,10 +155,26 @@ const AddUser = () => {
                         </Block>
                     </Image>
                     <Block marginTop={sizes.sm}>
-
-                        <Input placeholder="Name" marginBottom={sizes.sm} danger={nameDanger} onChangeText={(text) => { handleChangeText("name", text); }} />
-                        <Input placeholder="On Time [0-9]s" marginBottom={sizes.sm} danger={onTimeDanger} onChangeText={(text) => { handleChangeText("on-time", text); }} />
-                        <Input placeholder="Off Time [0-9]s" marginBottom={sizes.sm} danger={offTimeDanger} onChangeText={(text) => { handleChangeText("off-time", text); }} />
+                        <Input
+                            placeholder="Name"
+                            marginBottom={sizes.sm}
+                            danger={nameDanger}
+                            onChangeText={(text) => { handleChangeText("name", text); }}
+                        />
+                        <Input
+                            placeholder="On Time [0-9]s"
+                            marginBottom={sizes.sm}
+                            danger={onTimeDanger}
+                            keyboardType="number-pad"
+                            onChangeText={(text) => { handleChangeText("on-time", text); }}
+                        />
+                        <Input
+                            placeholder="Off Time [0-9]s"
+                            marginBottom={sizes.sm}
+                            danger={offTimeDanger}
+                            keyboardType="number-pad"
+                            onChangeText={(text) => { handleChangeText("off-time", text); }}
+                        />
                     </Block>
                     <Block align='flex-end'>
                         <Button
@@ -164,7 +182,8 @@ const AddUser = () => {
                             radius={sizes.m}
                             color="rgba(0,0,0,0.2)"
                             outlined={String(colors.black)}
-                            onPress={handleSave}>
+                            onPress={handleSave}
+                        >
                             <Ionicons
                                 size={30}
                                 name="checkmark-sharp"
