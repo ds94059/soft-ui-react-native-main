@@ -31,6 +31,7 @@
     "react-dom": "16.13.1",
     "react-native": "~0.63.4",
     "react-native-ble-plx": "^2.0.3",
+    "react-native-color-picker": "^0.6.0",
     "react-native-dialog": "^9.2.1",
     "react-native-fs": "^2.19.0",
     "react-native-gesture-handler": "~1.10.2",
@@ -41,7 +42,8 @@
     "react-native-safe-area-context": "3.2.0",
     "react-native-screens": "~3.0.0",
     "react-native-unimodules": "~0.13.3",
-    "react-native-web": "^0.16.3"
+    "react-native-web": "^0.16.3",
+    "react-native-wheel-color-picker": "^1.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.14.3",
