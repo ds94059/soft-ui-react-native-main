@@ -237,7 +237,7 @@ const Users = () => {
                             </Text>
                         </Button>
                         <Block flex={0} align="center">
-                            <TouchableWithoutFeedback onLongPress={changePicture}>
+                            <TouchableWithoutFeedback onPress={changePicture}>
                                 <Image
                                     width={300}
                                     height={300}

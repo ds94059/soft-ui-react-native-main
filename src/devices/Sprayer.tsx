@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Linking, StatusBar, View, Alert, FlatList, PermissionsAndroid, TouchableOpacity, Pressable } from 'react-native';
+import { Linking, StatusBar, View, Alert, FlatList, PermissionsAndroid, TouchableOpacity, Pressable, Platform } from 'react-native';
 import Slider from '@react-native-community/slider';
 import * as RNFS from 'react-native-fs';
 import { useNavigation } from '@react-navigation/core';
@@ -25,6 +25,8 @@ let loopId: NodeJS.Timeout;
 
 // request storage permission
 const requestStoragePermission = async () => {
+    if (Platform.OS == 'ios')
+        return
     try {
         const granted = await PermissionsAndroid.request(
             PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
@@ -368,20 +370,21 @@ const Sprayer = () => {
                                         color={colors.white}
                                     />
                                 </Button>
-                                <Slider
-                                    style={{ width: "65%", }}
-                                    thumbTintColor={"#ffffff"}
-                                    // maximumTrackTintColor={"#ffffff"}
-                                    minimumTrackTintColor={"#ffffff"}
-                                    minimumValue={0}
-                                    maximumValue={100}
-                                    onValueChange={(bright) => { onChangeBrightness1(Number(bright.toFixed(0))) }}
-                                    value={brightness}
-                                    tapToSeek
-                                />
                                 <Text white position='absolute' >
                                     {brightness}
                                 </Text>
+                                <Block justify="center" marginHorizontal={sizes.s}>
+                                    <Slider
+                                        thumbTintColor={"#ffffff"}
+                                        // maximumTrackTintColor={"#ffffff"}
+                                        minimumTrackTintColor={"#ffffff"}
+                                        minimumValue={0}
+                                        maximumValue={100}
+                                        onValueChange={(bright) => { onChangeBrightness1(Number(bright.toFixed(0))) }}
+                                        value={brightness}
+                                        tapToSeek
+                                    />
+                                </Block>
                                 <Button
                                     shadow={false}
                                     radius={sizes.m}

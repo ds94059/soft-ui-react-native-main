@@ -26,11 +26,11 @@ const Product = ({ id, image, title, description, type, linkLabel }: IProduct) =
       <TouchableOpacity key={id} onPress={() => navigation.navigate(description)}>
         <Image
           key={id}
-          resizeMode="cover"
+          // resizeMode="cover"
           source={image}
           style={{
-            height: isHorizontal ? 130 : 130,
-            width: isHorizontal ? 130 : '100%',
+            height: CARD_WIDTH * 0.8,
+            width: isHorizontal ? CARD_WIDTH * 0.8 : '100%',
             resizeMode: "contain"
           }}
         />

@@ -102,7 +102,7 @@ export const FOLLOWING: IProduct[] = [
     id: 3,
     type: 'horizontal',
     title: 'Unique activities with local experts.',
-    description: 'Fan',
+    description: 'Door',
     image: require('../assets/images/sliding-door.png'),
   },
   {
@@ -116,7 +116,7 @@ export const FOLLOWING: IProduct[] = [
     id: 5,
     type: 'vertical',
     title: 'Get more followers and grow.',
-    description: 'Door',
+    description: 'Fan',
     image: require('../assets/images/blinds.png'),
   },
   {

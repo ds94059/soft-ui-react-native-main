@@ -1,5 +1,5 @@
 import React, { useCallback, useState, useEffect } from 'react';
-import { PermissionsAndroid, Alert } from 'react-native';
+import { PermissionsAndroid, Alert, Platform } from 'react-native';
 import { useIsFocused } from "@react-navigation/native";
 import { BleManager, State, ScanMode, Device } from 'react-native-ble-plx';
 
@@ -12,6 +12,8 @@ export let sprayer: Device;
 
 //init bleManager
 const requestBlePermission = async () => {
+    if (Platform.OS == 'ios')
+        return
     try {
         const granted = await PermissionsAndroid.request(
             PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
@@ -49,7 +51,7 @@ const requestBlePermission = async () => {
             }, true)
 
         } else {
-            console.log("Storage permission denied");
+            console.log("Bluetooth permission denied");
         }
     } catch (err) {
         console.warn(err);
@@ -60,6 +62,8 @@ const requestBlePermission = async () => {
 
 // connect to the sprayer
 const connectDevice = async (sprayer: Device) => {
+    if (Platform.OS == 'ios')
+        return
     try {
         console.log('connecting...')
         await sprayer.connect()
@@ -103,7 +107,6 @@ const Home = () => {
         categories.push({ id: 1, name: 'Popular', image: require('../assets/icons/office.png') });
         categories.push({ id: 2, name: 'Newest', image: require('../assets/icons/home.png') });
     }
-
     useEffect(() => {
         if (isFocused)
             requestBlePermission();
