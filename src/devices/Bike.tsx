@@ -5,10 +5,13 @@ import { useIsFocused } from "@react-navigation/native";
 import { Ionicons } from '@expo/vector-icons';
 import { ColorPicker, TriangleColorPicker, fromHsv } from 'react-native-color-picker';
 
-import { Block, Button, Image, Text } from '../components';
+import { Block, Button, Image, Text, Switch } from '../components';
 import { useData, useTheme, useTranslation } from '../hooks';
 let count = 0;
 let timer: NodeJS.Timeout;
+let autoId: NodeJS.Timeout;
+
+const IP_ADDR = 'http://192.168.112.70:5000/color/';
 
 const Bike = () => {
     const { user } = useData();
@@ -17,29 +20,7 @@ const Bike = () => {
     const navigation = useNavigation();
     const isFocused = useIsFocused();
     const [oldColor, setOldColor] = useState("#FFFFFF");
-
-    const setColor = (color: string) => {
-        if (oldColor == color)
-            return
-        setOldColor(color);
-        console.log(color);
-        clearTimeout(timer);
-        timer = setTimeout(() => {
-            console.log('Change stopped');
-            try {
-                if (color == "")
-                    return;
-                fetch('http://192.168.155.70:5000/color/' + color.slice(1))
-                    .then((response) => {
-                        return response.json();
-                    }).then((json) => {
-                        console.log(json.status);
-                    })
-            } catch (error) {
-                console.error(error);
-            }
-        }, 200);
-    }
+    const [autoMode, setAutoMode] = useState(false);
 
     useEffect(() => {
         StatusBar.setBarStyle('light-content');
@@ -54,6 +35,53 @@ const Bike = () => {
             //setColor('#ff00f0');
         }
     }, [isFocused])
+
+    const setColor = (color: string) => {
+        if (oldColor == color)
+            return
+        setOldColor(color);
+        console.log(color);
+
+        if (autoMode)
+            return
+
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+            console.log('Change stopped');
+            try {
+                if (color == "")
+                    return;
+                fetch(IP_ADDR + color.slice(1))
+                    .then((response) => {
+                        return response.json();
+                    }).then((json) => {
+                        console.log(json.status);
+                    })
+            } catch (error) {
+                console.error(error);
+            }
+        }, 200);
+    }
+
+    const switchMode = (auto: boolean) => {
+        setAutoMode(auto);
+        if (auto) {
+            autoId = setInterval(() => {
+                try {
+                    fetch(IP_ADDR)
+                        .then((response) => {
+                            return response.json();
+                        }).then((json) => {
+                            console.log(json.status);
+                        })
+                } catch (error) {
+                    console.error(error);
+                }
+            }, 3000);
+        }
+        else
+            clearInterval(autoId);
+    }
 
     return (
         <Block safe marginTop={sizes.md}>
@@ -71,24 +99,39 @@ const Bike = () => {
                         radius={sizes.cardRadius}
                         source={assets.background}
                     >
-                        <Button
-                            row
-                            flex={0}
-                            justify="flex-start"
-                            onPress={() => navigation.goBack()}>
-                            <Image
-                                radius={0}
-                                width={10}
-                                height={18}
-                                color={colors.white}
-                                source={assets.arrow}
-                                transform={[{ rotate: '180deg' }]}
-                            />
-                            <Text p white marginLeft={sizes.s}>
-                                {t('device.bike.title')}
-                            </Text>
-                        </Button>
-
+                        <Block row align='center' flex={0} justify='space-between'>
+                            <Button
+                                row
+                                flex={0}
+                                justify="flex-start"
+                                onPress={() => navigation.goBack()}>
+                                <Image
+                                    radius={0}
+                                    width={10}
+                                    height={18}
+                                    color={colors.white}
+                                    source={assets.arrow}
+                                    transform={[{ rotate: '180deg' }]}
+                                />
+                                <Text p white marginLeft={sizes.s}>
+                                    {t('device.bike.title')}
+                                </Text>
+                            </Button>
+                            <Button
+                                row
+                                white
+                                paddingHorizontal={sizes.s}
+                                onPress={() => { switchMode(!autoMode) }}
+                            >
+                                <Text p paddingHorizontal={sizes.s}>
+                                    Auto Mode
+                                </Text>
+                                <Switch
+                                    checked={autoMode}
+                                    onPress={() => { switchMode(!autoMode) }}
+                                />
+                            </Button>
+                        </Block>
 
                         <Block width={"100%"} height={500}>
                             <TriangleColorPicker
