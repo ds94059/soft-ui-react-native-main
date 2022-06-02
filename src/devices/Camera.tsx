@@ -9,7 +9,7 @@ import { useData, useTheme, useTranslation } from '../hooks/';
 // import { VLCPlayer, VlCPlayerView } from 'react-native-vlc-media-player';
 // import Orientation from 'react-native-orientation';
 
-// import Video from 'react-native-video'
+import Video from 'react-native-video'
 
 const Camera = () => {
     const { user } = useData();
@@ -64,16 +64,20 @@ const Camera = () => {
                                 source={{ uri: "rtsp://root:Jwell61791997@10.100.1.24:554/live1s1.sdp" }}
                                 style={{ align: "center", width: 400, height: 400 }}
                             /> */}
-                            {/* <Video
-                                source={{ uri: "file:///Users/user/Downloads/rtsp-camera/filename.mp4" }}   // Can be a URL or a local file.
+                            <Video
+                                source={require('../assets/video/filename.mp4')}       // Can be a URL or a local file.
+                                onBuffer={console.log('buffer')}
+                                onError={(e: any) => { console.log(e) }}
+                                resizeMode="cover"           // Fill the whole screen at aspect ratio.
                                 style={{
-                                    position: 'absolute',
+                                    height: 350,
+                                    width: 350,
                                     top: 0,
                                     left: 0,
                                     bottom: 0,
                                     right: 0,
                                 }}
-                            /> */}
+                            />
                         </Block>
                         <Block flex={0} align="center">
                             <Block row marginVertical={sizes.m}>
