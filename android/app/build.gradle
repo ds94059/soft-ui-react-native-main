@@ -184,6 +184,8 @@ android {
 }
 
 dependencies {
+//    maven { url 'https://www.jitpack.io' }
+
     implementation fileTree(dir: "libs", include: ["*.jar"])
     //noinspection GradleDynamicVersion
     implementation "com.facebook.react:react-native:+"  // From node_modules
