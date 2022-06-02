@@ -6,15 +6,6 @@ import android.net.Uri;
 
 import com.facebook.react.PackageList;
 import com.facebook.react.ReactApplication;
-import com.brentvatne.react.ReactVideoPackage;
-import com.brentvatne.react.ReactVideoPackage;
-import com.reactnativecommunity.viewpager.RNCViewPagerPackage;
-import com.yuanzhou.vlc.ReactVlcPlayerPackage;
-import com.ghondar.vlc.VlcPlayerPackage;
-import com.ghondar.vlc.VlcPlayerPackage;
-import com.yuanzhou.vlc.ReactVlcPlayerPackage;
-import com.yuanzhou.vlc.ReactVlcPlayerPackage;
-import com.yuanzhou.vlc.ReactVlcPlayerPackage;
 import com.imagepicker.ImagePickerPackage;
 import com.facebook.react.ReactInstanceManager;
 import com.facebook.react.ReactNativeHost;
