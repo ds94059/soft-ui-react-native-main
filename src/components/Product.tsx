@@ -43,7 +43,7 @@ const Product = ({ id, image, title, description, type, linkLabel }: IProduct) =
         <Text p marginBottom={sizes.s}>
           {title}
         </Text>
-        <TouchableOpacity>
+        <TouchableOpacity key={id} onPress={() => navigation.navigate(description)}>
           <Block row flex={0} align="center">
             <Text
               p
@@ -51,7 +51,7 @@ const Product = ({ id, image, title, description, type, linkLabel }: IProduct) =
               semibold
               size={sizes.linkSize}
               marginRight={sizes.s}>
-              {linkLabel || t('common.readArticle')}
+              {linkLabel || t('common.goProduct')}
             </Text>
             <Image source={assets.arrow} color={colors.link} />
           </Block>

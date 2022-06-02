@@ -133,9 +133,9 @@ export const TRENDING: IProduct[] = [
   {
     id: 1,
     type: 'horizontal',
-    title: 'Experiences and things to do wherever you are.',
-    description: 'Fan',
-    image: require('../assets/images/fan.png'),
+    title: 'Watch your mycelium growing up.',
+    description: 'Camera',
+    image: require('../assets/images/video_camera.png'),
   },
   {
     id: 2,
