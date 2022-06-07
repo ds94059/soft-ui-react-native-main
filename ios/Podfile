@@ -20,4 +20,10 @@ target 'rnsoftuikitfree' do
   # end
   pod 'react-native-image-picker', :path => '../node_modules/react-native-image-picker'
 
+  pod 'react-native-vlc-media-player', :path => '../node_modules/react-native-vlc-media-player'
+
+  pod 'react-native-viewpager', :path => '../node_modules/@react-native-community/viewpager'
+
+  pod 'react-native-video', :path => '../node_modules/react-native-video'
+
 end
