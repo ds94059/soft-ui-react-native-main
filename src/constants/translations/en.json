@@ -131,6 +131,12 @@
     },
     "door": {
       "title": "Door"
+    },
+    "camera": {
+      "title": "Camera"
+    },
+    "dashboard": {
+      "title": "Dashboard"
     }
   }
 }

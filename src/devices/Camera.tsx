@@ -24,7 +24,7 @@ const Camera = () => {
     const navigation = useNavigation();
 
     const [showModal, setModal] = useState(false);
-    const [quantity, setQuantity] = useState("1");
+    const [quantity, setQuantity] = useState("Camera1");
     const [selectedIdx, setIndex] = useState(0);
     const [cameraSrc, setCameraSrc] = useState(CAMERA_SRC.EV_PI);
 
@@ -67,7 +67,7 @@ const Camera = () => {
                         transform={[{ rotate: '180deg' }]}
                     />
                     <Text p white marginLeft={sizes.s}>
-                        {t('device.door.title')}
+                        {t('device.camera.title')}
                     </Text>
                 </Button>
                 <Block align='center' justify='center' >

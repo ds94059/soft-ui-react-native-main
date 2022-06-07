@@ -22,8 +22,6 @@ target 'rnsoftuikitfree' do
 
   pod 'react-native-vlc-media-player', :path => '../node_modules/react-native-vlc-media-player'
 
-  pod 'react-native-viewpager', :path => '../node_modules/@react-native-community/viewpager'
-
-  pod 'react-native-video', :path => '../node_modules/react-native-video'
+  pod 'react-native-viewpager', :path => '../node_modules/@react-native-community/viewpager's
 
 end

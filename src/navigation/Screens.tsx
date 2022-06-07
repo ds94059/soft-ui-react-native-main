@@ -2,7 +2,7 @@ import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 
 import { Articles, Components, Home, Profile, Register, Pro, Users } from '../screens';
-import { Sprayer, Bike, Door, Camera } from '../devices';
+import { Sprayer, Bike, Door, Camera, Dashboard } from '../devices';
 import { useScreenOptions, useTranslation } from '../hooks';
 import AddUser from '../screens/AddUser';
 
@@ -67,6 +67,12 @@ export default () => {
       <Stack.Screen
         name="Camera"
         component={Camera}
+        options={{ headerShown: false }}
+      />
+
+      <Stack.Screen
+        name="Dashboard"
+        component={Dashboard}
         options={{ headerShown: false }}
       />
 

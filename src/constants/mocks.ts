@@ -133,16 +133,16 @@ export const TRENDING: IProduct[] = [
   {
     id: 1,
     type: 'horizontal',
-    title: 'Watch your mycelium growing up.',
+    title: 'Watch your Mycelium growing up.',
     description: 'Camera',
     image: require('../assets/images/video_camera.png'),
   },
   {
     id: 2,
     type: 'vertical',
-    title: 'The highest status people.',
-    description: 'Fan',
-    image: require('../assets/images/fan.png'),
+    title: 'Monitor variables in Mycelium environment.',
+    description: 'Dashboard',
+    image: require('../assets/images/dashboard.png'),
   },
   {
     id: 3,
