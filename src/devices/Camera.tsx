@@ -10,11 +10,13 @@ import { useData, useTheme, useTranslation } from '../hooks/';
 
 import { VLCPlayer, VlCPlayerView } from 'react-native-vlc-media-player';
 
-const cameraData = ['Camera1', 'Camera2'];
+const quantityData = ["EV_PI", "RESTROOM", "MAINDOOR"];
 enum CAMERA_SRC {
     EV_PI = "rtsp://root:Jwell61791997@10.100.1.24:554/live1s1.sdp",
-    RESTROOM = "rtsp://root:Jwell61791997@10.100.1.23:554/live1s1.sdp"
+    RESTROOM = "rtsp://root:Jwell61791997@10.100.1.23:554/live1s1.sdp",
+    MAINDOOR = "rtsp://root:Jwell61791997@10.100.1.22:554/live1s1.sdp",
 }
+
 
 
 const Camera = () => {
@@ -24,9 +26,8 @@ const Camera = () => {
     const navigation = useNavigation();
 
     const [showModal, setModal] = useState(false);
-    const [quantity, setQuantity] = useState("Camera1");
-    const [selectedIdx, setIndex] = useState(0);
-    const [cameraSrc, setCameraSrc] = useState(CAMERA_SRC.EV_PI);
+    const [quantity, setQuantity] = useState("MAINDOOR");
+    const [cameraSrc, setCameraSrc] = useState(CAMERA_SRC.MAINDOOR);
 
     useEffect(() => {
         StatusBar.setBarStyle('light-content');
@@ -39,7 +40,7 @@ const Camera = () => {
         if (index == 0)
             setCameraSrc(CAMERA_SRC.EV_PI);
         else
-            setCameraSrc(CAMERA_SRC.RESTROOM);
+            setCameraSrc(CAMERA_SRC.MAINDOOR);
     }
 
     return (
@@ -103,14 +104,13 @@ const Camera = () => {
             <Modal visible={showModal} onRequestClose={() => setModal(false)}>
                 <FlatList
                     keyExtractor={(index) => `${index}`}
-                    data={cameraData}
+                    data={quantityData}
                     renderItem={({ item, index }) => (
                         <Button
                             marginBottom={sizes.sm}
                             onPress={() => {
                                 setQuantity(item);
                                 setModal(false);
-                                setIndex(index);
                                 setCamera(index);
                             }}>
                             <Text p white semibold>

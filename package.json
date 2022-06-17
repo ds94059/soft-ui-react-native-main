@@ -10,6 +10,7 @@
     "postinstall": "npx jetify"
   },
   "dependencies": {
+    "@miblanchard/react-native-slider": "^2.1.0",
     "@react-native-async-storage/async-storage": "^1.13.0",
     "@react-native-community/masked-view": "0.1.10",
     "@react-native-community/slider": "^4.2.1",
@@ -33,6 +34,7 @@
     "react-native": "~0.63.4",
     "react-native-ble-plx": "^2.0.3",
     "react-native-color-picker": "^0.6.0",
+    "react-native-cool-speedometer": "^1.1.5",
     "react-native-dialog": "^9.2.1",
     "react-native-fs": "^2.19.0",
     "react-native-gesture-handler": "~1.10.2",
@@ -42,11 +44,13 @@
     "react-native-reanimated": "~2.1.0",
     "react-native-safe-area-context": "3.2.0",
     "react-native-screens": "~3.0.0",
+    "react-native-svg": "^12.3.0",
     "react-native-unimodules": "~0.13.3",
     "react-native-video": "^5.2.0",
     "react-native-vlc-media-player": "^1.0.40",
     "react-native-web": "^0.16.3",
     "react-native-wheel-color-picker": "^1.2.0",
+    "socket.io-client": "^4.5.1",
     "sp-react-native-mqtt": "^0.5.0"
   },
   "devDependencies": {

@@ -127,7 +127,13 @@
       }
     },
     "bike": {
-      "title": "Bike LED"
+      "title": "EVpi",
+      "led": {
+        "title": "EVpi LED"
+      },
+      "dashboard": {
+        "title": "EVpi Dashboard"
+      }
     },
     "door": {
       "title": "Door"

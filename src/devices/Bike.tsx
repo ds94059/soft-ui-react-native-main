@@ -3,15 +3,16 @@ import { Linking, StatusBar, View } from 'react-native';
 import { useNavigation } from '@react-navigation/core';
 import { useIsFocused } from "@react-navigation/native";
 import { Ionicons } from '@expo/vector-icons';
-import { ColorPicker, TriangleColorPicker, fromHsv } from 'react-native-color-picker';
 
 import { Block, Button, Image, Text, Switch } from '../components';
 import { useData, useTheme, useTranslation } from '../hooks';
-let count = 0;
-let timer: NodeJS.Timeout;
-let autoId: NodeJS.Timeout;
+import webSocket from "socket.io-client"
 
-const IP_ADDR = 'http://192.168.112.70:5000/color/';
+const iconSize = 130;
+
+const endPoint = "http://20.219.220.110:5000";
+const socket = webSocket(endPoint);
+const macList = ['47B74C7E7C31', 'C522F405D062'];
 
 const Bike = () => {
     const { user } = useData();
@@ -19,8 +20,7 @@ const Bike = () => {
     const { t } = useTranslation();
     const navigation = useNavigation();
     const isFocused = useIsFocused();
-    const [oldColor, setOldColor] = useState("#FFFFFF");
-    const [autoMode, setAutoMode] = useState(false);
+    const [color, setColor] = useState("#000000")
 
     useEffect(() => {
         StatusBar.setBarStyle('light-content');
@@ -32,55 +32,28 @@ const Bike = () => {
 
     useEffect(() => {
         if (isFocused) {
-            //setColor('#ff00f0');
+            initSocket();
+
+        }
+        return () => {
+            socket.removeAllListeners();
+            socket.disconnect();
+            console.log('killed');
         }
     }, [isFocused])
 
-    const setColor = (color: string) => {
-        if (oldColor == color)
-            return
-        setOldColor(color);
-        console.log(color);
+    const initSocket = () => {
+        console.log('init websocket');
+        socket.connect();
 
-        if (autoMode)
-            return
-
-        clearTimeout(timer);
-        timer = setTimeout(() => {
-            console.log('Change stopped');
-            try {
-                if (color == "")
-                    return;
-                fetch(IP_ADDR + color.slice(1))
-                    .then((response) => {
-                        return response.json();
-                    }).then((json) => {
-                        console.log(json.status);
-                    })
-            } catch (error) {
-                console.error(error);
-            }
-        }, 200);
-    }
-
-    const switchMode = (auto: boolean) => {
-        setAutoMode(auto);
-        if (auto) {
-            autoId = setInterval(() => {
-                try {
-                    fetch(IP_ADDR)
-                        .then((response) => {
-                            return response.json();
-                        }).then((json) => {
-                            console.log(json.status);
-                        })
-                } catch (error) {
-                    console.error(error);
-                }
-            }, 3000);
+        for (let i = 0; i < macList.length; i++) {
+            socket.on(`evpi/${macList[i]}/sensors`, data => {
+                // console.log(`evpi/${macList[i]}/sensors: `, data)
+                const object = JSON.parse(data.color_led)
+                // console.log(data.color_led)
+                setColor(object.color);
+            })
         }
-        else
-            clearInterval(autoId);
     }
 
     return (
@@ -117,43 +90,32 @@ const Bike = () => {
                                     {t('device.bike.title')}
                                 </Text>
                             </Button>
-                            <Button
-                                row
-                                white
-                                paddingHorizontal={sizes.s}
-                                onPress={() => { switchMode(!autoMode) }}
-                            >
-                                <Text p paddingHorizontal={sizes.s}>
-                                    Auto Mode
-                                </Text>
-                                <Switch
-                                    checked={autoMode}
-                                    onPress={() => { switchMode(!autoMode) }}
-                                />
-                            </Button>
+                        </Block>
+                        <Block row marginVertical={sizes.s}>
+                            <Block card align="center" marginHorizontal={sizes.s}>
+                                <Button onPress={() => navigation.navigate('BikeLED')}>
+                                    <Image source={require('../assets/images/led.png')} width={iconSize} height={iconSize} color={color} />
+                                </Button>
+                            </Block>
+                            <Block card align="center" marginHorizontal={sizes.s}>
+                                <Button onPress={() => navigation.navigate('BikeDashboard')}>
+                                    <Image source={require('../assets/images/dashboard.png')} width={iconSize} height={iconSize} />
+                                </Button>
+                            </Block>
+                        </Block>
+                        <Block row marginVertical={sizes.s}>
+                            <Block card marginHorizontal={sizes.s} align="center">
+                                <Button onPress={() => navigation.navigate('Camera')}>
+                                    <Image source={require('../assets/images/video_camera.png')} width={iconSize} height={iconSize} />
+                                </Button>
+                            </Block>
+                            {/* <Block card marginHorizontal={sizes.s} align="center">
+                                <Button>
+                                    <Image source={require('../assets/images/led.png')} width={iconSize} height={iconSize} />
+                                </Button>
+                            </Block> */}
                         </Block>
 
-                        <Block width={"100%"} height={500}>
-                            <TriangleColorPicker
-                                onColorSelected={(color) => alert(`Color selected: ${color}`)}
-                                onColorChange={(color) => setColor(fromHsv(color))}
-                                style={{ flex: 1 }}
-                            />
-                        </Block>
-                        <Block align="center" marginTop={sizes.m}>
-                            <Text bold size={20} white transform="uppercase">{oldColor}</Text>
-                        </Block>
-                        <Block justify="center" marginTop={sizes.sm} row>
-                            <Text bold size={20} white transform="uppercase" marginHorizontal={sizes.s}>
-                                R: {parseInt(oldColor.slice(1, 3), 16)}
-                            </Text>
-                            <Text bold size={20} white transform="uppercase" marginHorizontal={sizes.s}>
-                                G: {parseInt(oldColor.slice(3, 5), 16)}
-                            </Text>
-                            <Text bold size={20} white transform="uppercase" marginHorizontal={sizes.s}>
-                                B: {parseInt(oldColor.slice(5, 7), 16)}
-                            </Text>
-                        </Block>
                     </Image>
                 </Block>
             </Block >
