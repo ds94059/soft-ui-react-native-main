@@ -8,14 +8,12 @@ import * as RNFS from 'react-native-fs';
 
 import { Block, Button, Image, Text, Switch, Modal } from '../components';
 import { useData, useTheme, useTranslation } from '../hooks';
-import webSocket from "socket.io-client"
+
+import { socket, selectMac } from './Bike'
 
 let count = 0;
 let timer: NodeJS.Timeout;
 let autoId: NodeJS.Timeout;
-
-const endPoint = "http://20.219.220.110:5000";
-const socket = webSocket(endPoint);
 
 const quantityData = ['front', 'back'];
 
@@ -39,20 +37,20 @@ const BikeLED = () => {
 
         return () => {
             StatusBar.setBarStyle('dark-content');
-            // socket.disconnect();
         };
     }, []);
 
 
     useEffect(() => {
         if (isFocused) {
-            //setColor('#ff00f0');
         }
     }, [isFocused])
 
     const initSocket = () => {
         console.log('init websocket');
-        socket.connect();
+        if (!socket.connected)
+            socket.connect()
+        console.log(socket.connected);
     }
 
     const initAuto = async () => {
@@ -113,14 +111,19 @@ const BikeLED = () => {
             try {
                 if (color == "")
                     return;
+                const R = parseInt(color.slice(1, 3), 16);
+                const G = parseInt(color.slice(3, 5), 16);
+                const B = parseInt(color.slice(5, 7), 16);
                 const msg = {
+                    mac: selectMac,
                     topic: "color_led",
                     msg: {
                         target: quantity,
-                        color: color
+                        mode: 0,
+                        color: [R, G, B]
                     }
                 }
-                socket.emit('set_data', JSON.stringify(msg));
+                socket.emit('evpi', JSON.stringify(msg));
                 console.log(JSON.stringify(msg))
             } catch (error) {
                 console.error(error);
@@ -134,17 +137,19 @@ const BikeLED = () => {
         if (auto) {
             autoId = setInterval(() => {
                 try {
-                    let r = Number((Math.random() * 255).toFixed(0))
-                    let g = Number((Math.random() * 255).toFixed(0))
-                    let b = Number((Math.random() * 255).toFixed(0))
+                    const R = Number((Math.random() * 255).toFixed(0))
+                    const G = Number((Math.random() * 255).toFixed(0))
+                    const B = Number((Math.random() * 255).toFixed(0))
                     const msg = {
+                        mac: selectMac,
                         topic: "color_led",
                         msg: {
                             target: quantity,
-                            color: rgbToHex(r, g, b)
+                            mode: 0,
+                            color: [R, G, B]
                         }
                     }
-                    socket.emit('set_data', JSON.stringify(msg));
+                    socket.emit('evpi', JSON.stringify(msg));
                     console.log(JSON.stringify(msg));
 
                 } catch (error) {
@@ -190,7 +195,7 @@ const BikeLED = () => {
                                     {t('device.bike.led.title')}
                                 </Text>
                             </Button>
-                            <Button
+                            {/* <Button
                                 row
                                 white
                                 paddingHorizontal={sizes.s}
@@ -203,7 +208,7 @@ const BikeLED = () => {
                                     checked={autoMode}
                                     onPress={() => { switchMode(!autoMode) }}
                                 />
-                            </Button>
+                            </Button> */}
                         </Block>
 
                         <Block>

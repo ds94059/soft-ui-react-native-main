@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { Block, Button, Image, Text, Modal } from '../components';
 import { useData, useTheme, useTranslation } from '../hooks';
-import webSocket from "socket.io-client"
+import { socket, macList, selectMac } from './Bike';
 
 import Speedometer, {
     Background,
@@ -19,10 +19,6 @@ import { Line, Text as SVGText, G } from 'react-native-svg'
 // import Slider from '@react-native-community/slider';
 import { Slider } from "@miblanchard/react-native-slider"
 
-const endPoint = "http://20.219.220.110:5000";
-// const endPoint = "http://10.100.1.93:5000"
-const socket = webSocket(endPoint);
-const macList = ['47B74C7E7C31', 'C522F405D062'];
 const deviceList = ['EVpi']
 
 
@@ -51,7 +47,6 @@ const BikeDashboard = () => {
         return () => {
             StatusBar.setBarStyle('dark-content');
             socket.removeAllListeners();
-            socket.disconnect();
         };
     }, []);
 
@@ -76,11 +71,13 @@ const BikeDashboard = () => {
 
     const initSocket = () => {
         console.log('init websocket');
-        socket.connect();
+        if (!socket.connected)
+            socket.connect()
+        console.log(socket.connected);
 
         for (let i = 0; i < macList.length; i++) {
-            socket.on(`evpi/${macList[0]}/sensors`, data => {
-                // console.log(`evpi/${macList[0]}/sensors: `, data)
+            socket.on(`evpi/${macList[i]}/sensors`, data => {
+                console.log(`evpi/${macList[i]}/sensors: `, data)
                 setRawData(JSON.stringify(data));
 
                 if (data.joint_states[0])
@@ -171,10 +168,11 @@ const BikeDashboard = () => {
                                     onSlidingComplete={(value) => {
                                         const brakeValue = Number(value).toFixed(0);
                                         const msg = {
+                                            mac: selectMac,
                                             topic: "brake_servo",
                                             msg: brakeValue
                                         }
-                                        socket.emit('set_data', JSON.stringify(msg));
+                                        socket.emit('evpi', JSON.stringify(msg));
                                         console.log(JSON.stringify(msg))
                                     }}
                                 />
