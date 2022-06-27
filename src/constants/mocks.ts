@@ -132,18 +132,18 @@ export const FOLLOWING: IProduct[] = [
 export const TRENDING: IProduct[] = [
   {
     id: 1,
-    type: 'horizontal',
+    type: 'vertical',
     title: 'Watch your Mycelium growing up.',
     description: 'Camera',
     image: require('../assets/images/video_camera.png'),
   },
-  // {
-  //   id: 2,
-  //   type: 'vertical',
-  //   title: 'Monitor variables.',
-  //   description: 'Dashboard',
-  //   image: require('../assets/images/dashboard.png'),
-  // },
+  {
+    id: 2,
+    type: 'vertical',
+    title: 'Monitor variables.',
+    description: 'Dashboard',
+    image: require('../assets/images/dashboard.png'),
+  },
   // {
   //   id: 3,
   //   type: 'vertical',

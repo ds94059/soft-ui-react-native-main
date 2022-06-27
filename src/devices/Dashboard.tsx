@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { Block, Button, Image, Text, Modal } from '../components/';
 import { useData, useTheme, useTranslation } from '../hooks/';
-import webSocket from "socket.io-client"
+import { socket } from './Bike';
 
 import Speedometer, {
     Background,
@@ -19,10 +19,8 @@ import { Line, Text as SVGText, G } from 'react-native-svg'
 // import Slider from '@react-native-community/slider';
 // import { Slider } from "@miblanchard/react-native-slider"
 
-// const endPoint = "http://20.219.220.110:5000";
-const endPoint = "http://10.100.1.93:5000"
-const socket = webSocket(endPoint);
-const macList = ['C522F405D062', 'ddd']
+const macList = ['BFC1C5DD4C53', '47B74C7E7C31', 'FD3962C2D421', 'DB50AD1A2C93'];
+let selectMac = macList[0];
 
 const Dashboard = () => {
     const { user } = useData();
@@ -32,7 +30,6 @@ const Dashboard = () => {
     const [showModal, setModal] = useState(false);
     const [quantity, setQuantity] = useState(macList[0]);
     const [selectedIdx, setIndex] = useState(0);
-    const [evpiData, setEvpiData] = useState("");
 
     const [humid, setHumid] = useState(0);
     const [humidToSet, setHumidToSet] = useState(25);
@@ -46,7 +43,6 @@ const Dashboard = () => {
         return () => {
             StatusBar.setBarStyle('dark-content');
             socket.removeAllListeners();
-            socket.disconnect();
         };
     }, []);
 
@@ -71,37 +67,35 @@ const Dashboard = () => {
 
     const initSocket = () => {
         console.log('init websocket');
-        socket.connect();
+        if (!socket.connected)
+            socket.connect();
+        console.log(socket.connected);
 
         for (let i = 0; i < macList.length; i++) {
-            // socket.on(`mycelium/${macList[i]}/sensors`, data => {
-            //     if (quantity == macList[i]) {
-            //         console.log(`mycelium/${macList[i]}/sensors: `, data);
-            //     }
-            // })
-            socket.on(`mycelium/${macList[i]}/humid`, humid => {
-                if (quantity == macList[i]) {
-                    console.log(`mycelium/${macList[i]}/humid: `, humid);
-                    setHumid(humid);
-                }
-            })
-            socket.on(`mycelium/${macList[i]}/temp`, temp => {
-                if (quantity == macList[i]) {
-                    console.log(`mycelium/${macList[i]}/temp: `, temp);
-                    setTemp(temp);
-                }
-            })
 
-            socket.on(`evpi/${macList[i]}/sensors`, data => {
-                console.log(`evpi/${macList[i]}/sensors: `, data)
-                setEvpiData(JSON.stringify(data));
+            socket.on(`mycelium/${macList[i]}/sensors`, data => {
+                if (selectMac == macList[i]) {
+                    setHumid(data.humid);
+                    setTemp(data.temp);
+                }
             })
         }
     }
 
+    const publishToCloud = (topic: string, value: number) => {
+        const msg = {
+            mac: selectMac,
+            topic: topic,
+            msg: value
+        }
+        socket.emit('mycelium', JSON.stringify(msg));
+        console.log(JSON.stringify(msg))
+
+    }
+
     return (
-        <Block safe marginTop={sizes.md} >
-            <Image
+        <Block safe marginTop={sizes.md}>
+            {/* <Image
                 style={{ flex: 1 }}
                 background
                 resizeMode="cover"
@@ -109,31 +103,36 @@ const Dashboard = () => {
                 paddingBottom={sizes.l}
                 radius={sizes.cardRadius}
                 source={assets.background}
-            >
-                <Button
-                    row
-                    flex={0}
-                    justify="flex-start"
-                    onPress={() => navigation.goBack()}>
-                    <Image
-                        radius={0}
-                        width={10}
-                        height={18}
-                        color={colors.white}
-                        source={assets.arrow}
-                        transform={[{ rotate: '180deg' }]}
-                    />
-                    <Text p white marginLeft={sizes.s}>
-                        {t('device.dashboard.title')}
-                    </Text>
-                </Button>
+            > */}
+            <Block scroll contentContainerStyle={{ paddingBottom: sizes.padding }}>
+                <Block padding={sizes.sm} white>
+                    <Button
+                        row
+                        flex={0}
+                        justify="flex-start"
+                        onPress={() => navigation.goBack()}>
+                        <Image
+                            radius={0}
+                            width={10}
+                            height={18}
+                            color={colors.gray}
+                            source={assets.arrow}
+                            transform={[{ rotate: '180deg' }]}
+                        />
+                        <Text p marginLeft={sizes.s}>
+                            {t('device.dashboard.title')}
+                        </Text>
+                    </Button>
+
+                </Block>
+
                 <Block>
                     <Button
                         row
                         gradient={gradients.dark}
                         onPress={() => setModal(true)}
-                        marginHorizontal={sizes.m}
-                        marginBottom={sizes.s}>
+                        marginVertical={sizes.s}
+                        marginHorizontal={sizes.s}>
                         <Block
                             row
                             align="center"
@@ -149,8 +148,9 @@ const Dashboard = () => {
                             />
                         </Block>
                     </Button>
-                    <Block row marginVertical={sizes.m} >
-                        <Block align='center' height={'50%'} >
+
+                    <Block row marginVertical={sizes.s} >
+                        <Block align='center' card color={"#C1EDFF"} marginHorizontal={sizes.s}>
                             <Speedometer
                                 width={170}
                                 value={humid}
@@ -171,7 +171,8 @@ const Dashboard = () => {
                                     radius={sizes.m}
                                     color="rgba(0,0,0,0.2)"
                                     onPress={() => {
-                                        setHumidToSet(humidToSet - 1)
+                                        setHumidToSet(humidToSet - 1);
+                                        publishToCloud("set_humid", humidToSet - 1);
                                     }}>
                                     <Ionicons
                                         size={18}
@@ -180,7 +181,7 @@ const Dashboard = () => {
                                     />
                                 </Button>
 
-                                <Text white>
+                                <Text p>
                                     {humidToSet}
                                 </Text>
 
@@ -189,7 +190,8 @@ const Dashboard = () => {
                                     radius={sizes.m}
                                     color="rgba(0,0,0,0.2)"
                                     onPress={() => {
-                                        setHumidToSet(humidToSet + 1)
+                                        setHumidToSet(humidToSet + 1);
+                                        publishToCloud("set_humid", humidToSet + 1);
                                     }}>
                                     <Ionicons
                                         size={18}
@@ -199,7 +201,7 @@ const Dashboard = () => {
                                 </Button>
                             </Block>
                         </Block>
-                        <Block align='center' height={'50%'}>
+                        <Block align='center' card color={'#E48384'} marginHorizontal={sizes.s}>
                             <Speedometer
                                 width={170}
                                 value={temp}
@@ -221,8 +223,8 @@ const Dashboard = () => {
                                     radius={sizes.m}
                                     color="rgba(0,0,0,0.2)"
                                     onPress={() => {
-                                        setTempToSet(tempToSet - 1)
-                                        socket.emit('brake_servo', 180)
+                                        setTempToSet(tempToSet - 1);
+                                        publishToCloud("set_temp", tempToSet - 1)
                                     }}>
                                     <Ionicons
                                         size={18}
@@ -231,7 +233,7 @@ const Dashboard = () => {
                                     />
                                 </Button>
 
-                                <Text white>
+                                <Text p>
                                     {tempToSet}
                                 </Text>
 
@@ -240,7 +242,8 @@ const Dashboard = () => {
                                     radius={sizes.m}
                                     color="rgba(0,0,0,0.2)"
                                     onPress={() => {
-                                        setTempToSet(tempToSet + 1)
+                                        setTempToSet(tempToSet + 1);
+                                        publishToCloud("set_temp", tempToSet + 1);
                                     }}>
                                     <Ionicons
                                         size={18}
@@ -251,10 +254,6 @@ const Dashboard = () => {
                             </Block>
                         </Block>
                     </Block>
-
-                    <Text white>
-                        {evpiData}
-                    </Text>
 
                     {/* <Slider
                         thumbTintColor={"#ffffff"}
@@ -275,8 +274,10 @@ const Dashboard = () => {
                         onValueChange={(value) => { setHumid(Number(Number(value).toFixed(0))) }}
                     /> */}
                 </Block>
+            </Block>
 
-            </Image >
+
+            {/* </Image > */}
             <Modal visible={showModal} onRequestClose={() => setModal(false)}>
                 <FlatList
                     keyExtractor={(index) => `${index}`}
@@ -286,8 +287,11 @@ const Dashboard = () => {
                             marginBottom={sizes.sm}
                             onPress={() => {
                                 setQuantity(item);
+                                selectMac = item;
                                 setModal(false);
                                 setIndex(index);
+                                setHumid(0);
+                                setTemp(0);
                             }}>
                             <Text p white semibold>
                                 {item}

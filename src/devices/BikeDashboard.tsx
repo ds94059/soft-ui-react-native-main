@@ -72,7 +72,7 @@ const BikeDashboard = () => {
     const initSocket = () => {
         console.log('init websocket');
         if (!socket.connected)
-            socket.connect()
+            socket.connect();
         console.log(socket.connected);
 
         for (let i = 0; i < macList.length; i++) {
@@ -166,6 +166,10 @@ const BikeDashboard = () => {
                                         setBrakeValue(brake);
                                     }}
                                     onSlidingComplete={(value) => {
+                                        if (value > 179)
+                                            value = 179;
+                                        if (value < 0)
+                                            value = 0;
                                         const brakeValue = Number(value).toFixed(0);
                                         const msg = {
                                             mac: selectMac,
