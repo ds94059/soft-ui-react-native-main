@@ -15,7 +15,7 @@ export const endPoint = "http://20.219.220.110:5000";
 // export const endPoint = "http://192.168.47.70:5000"
 
 export const socket = webSocket(endPoint);
-export const macList = ['47B74C7E7C31', 'FD3962C2D421', 'DB50AD1A2C93'];
+export const macList = ['47B74C7E7C31', 'FD3962C2D421', 'C38A38A3CAF0'];
 export let selectMac = macList[0];
 
 const Bike = () => {
@@ -44,8 +44,8 @@ const Bike = () => {
             initSocket();
         }
         return () => {
-            socket.removeAllListeners();
-            console.log('killed');
+            // socket.removeAllListeners();
+            // console.log('killed');
         }
     }, [isFocused])
 
@@ -55,13 +55,15 @@ const Bike = () => {
             socket.connect();
         console.log(socket.connected);
 
+        socket.removeAllListeners();
         for (let i = 0; i < macList.length; i++) {
             socket.on(`evpi/${macList[i]}/sensors`, data => {
-                // console.log(`evpi/${macList[i]}/sensors: `, data)
-                if (data.color_led) {
-                    const R = data.color_led[2];
-                    const G = data.color_led[3];
-                    const B = data.color_led[4];
+                if (selectMac == macList[i])
+                    console.log(`evpi/${macList[i]}/sensors: `, data)
+                if (data.led_strips) {
+                    const R = data.led_strips[2];
+                    const G = data.led_strips[3];
+                    const B = data.led_strips[4];
                     setColor(rgbToHex(R, G, B));
                 }
             })

@@ -46,7 +46,7 @@ const BikeDashboard = () => {
         initSocket();
         return () => {
             StatusBar.setBarStyle('dark-content');
-            socket.removeAllListeners();
+            // socket.removeAllListeners();
         };
     }, []);
 
@@ -75,6 +75,7 @@ const BikeDashboard = () => {
             socket.connect();
         console.log(socket.connected);
 
+        socket.removeAllListeners();
         for (let i = 0; i < macList.length; i++) {
             socket.on(`evpi/${macList[i]}/sensors`, data => {
                 console.log(`evpi/${macList[i]}/sensors: `, data)
@@ -97,7 +98,7 @@ const BikeDashboard = () => {
 
     return (
         <Block safe marginTop={sizes.md} >
-            <Image
+            {/* <Image
                 style={{ flex: 1 }}
                 background
                 resizeMode="cover"
@@ -105,51 +106,64 @@ const BikeDashboard = () => {
                 paddingBottom={sizes.l}
                 radius={sizes.cardRadius}
                 source={assets.background}
+            > */}
+            <Block
+                scroll
+                // paddingHorizontal={sizes.s}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: sizes.padding }}
             >
-                <Button
-                    row
-                    flex={0}
-                    justify="flex-start"
-                    onPress={() => navigation.goBack()}>
-                    <Image
-                        radius={0}
-                        width={10}
-                        height={18}
-                        color={colors.white}
-                        source={assets.arrow}
-                        transform={[{ rotate: '180deg' }]}
-                    />
-                    <Text p white marginLeft={sizes.s}>
-                        {t('device.bike.dashboard.title')}
-                    </Text>
-                </Button>
-                <Block>
+                <Block
+                    padding={sizes.sm}
+                    color={colors.card}
+                >
                     <Button
                         row
-                        gradient={gradients.dark}
-                        onPress={() => setModal(true)}
-                        marginHorizontal={sizes.m}
-                        marginVertical={sizes.s}
-                    >
-                        <Block
-                            row
-                            align="center"
-                            justify="space-between"
-                            paddingHorizontal={sizes.sm}>
-                            <Text white bold marginRight={sizes.sm}>
-                                {quantity}
-                            </Text>
-                            <Image
-                                source={assets.arrow}
-                                color={colors.white}
-                                transform={[{ rotate: '90deg' }]}
-                            />
-                        </Block>
+                        flex={0}
+                        justify="flex-start"
+                        onPress={() => navigation.goBack()}>
+                        <Image
+                            radius={0}
+                            width={10}
+                            height={18}
+                            color={colors.gray}
+                            source={assets.arrow}
+                            transform={[{ rotate: '180deg' }]}
+                        />
+                        <Text p marginLeft={sizes.s}>
+                            {t('device.bike.dashboard.title')}
+                        </Text>
                     </Button>
+                </Block>
+
+                <Block>
+                    <Block>
+                        <Button
+                            row
+                            gradient={gradients.dark}
+                            onPress={() => setModal(true)}
+                            marginHorizontal={sizes.m}
+                            marginVertical={sizes.s}
+                        >
+                            <Block
+                                row
+                                align="center"
+                                justify="space-between"
+                                paddingHorizontal={sizes.sm}>
+                                <Text white bold marginRight={sizes.sm}>
+                                    {quantity}
+                                </Text>
+                                <Image
+                                    source={assets.arrow}
+                                    color={colors.white}
+                                    transform={[{ rotate: '90deg' }]}
+                                />
+                            </Block>
+                        </Button>
+                    </Block>
 
 
-
-                    <Block row marginVertical={sizes.s} flex={1.2}>
+                    <Block row marginVertical={sizes.s} height={200}>
                         <Block card marginHorizontal={sizes.s} >
                             <Block align="center">
                                 <Image source={require('../assets/images/brake.png')} width={100} height={100} />
@@ -213,7 +227,7 @@ const BikeDashboard = () => {
                                         front:
                                     </Text>
                                     <Text align='center' marginRight={14}>
-                                        {jointStates[0].toFixed(3)}
+                                        {(jointStates[0] * 180 / 3.14).toFixed(3)}°
                                     </Text>
                                 </Block>
                                 <Block >
@@ -228,7 +242,7 @@ const BikeDashboard = () => {
                                         back:
                                     </Text>
                                     <Text align='center'>
-                                        {jointStates[1].toFixed(3)}
+                                        {(jointStates[1] * 32 / 100).toFixed(3)} m
                                     </Text>
                                 </Block>
                             </Block>
@@ -236,22 +250,23 @@ const BikeDashboard = () => {
 
                         </Block>
                     </Block>
-                    <Block row marginVertical={sizes.s} flex={1.2}>
-                        <Block card marginHorizontal={sizes.s} >
+                    <Block row marginVertical={sizes.s} height={200}>
+                        <Block card marginHorizontal={sizes.s}>
                             <Text bold align='center'>
                                 Odom Pose
                             </Text>
 
-                            <Block row >
+                            <Block row>
                                 <Block >
                                     <Block align='center' justify='center'>
                                         <Image
+                                            padding={sizes.md}
                                             source={require('../assets/images/position.png')}
                                             width={50}
                                             height={50}
                                         />
                                     </Block>
-                                    <Block>
+                                    <Block >
                                         <Text size={10} align='center' bold>
                                             position:
                                         </Text>
@@ -261,14 +276,14 @@ const BikeDashboard = () => {
                                     </Block>
                                 </Block>
                                 <Block>
-                                    <Block align='center' justify='center'>
+                                    <Block align='center' justify='center' >
                                         <Image
                                             source={require('../assets/images/orientation.png')}
                                             width={50}
                                             height={50}
                                         />
                                     </Block>
-                                    <Block>
+                                    <Block >
                                         <Text size={10} align='center' bold>
                                             orientation:
                                         </Text>
@@ -324,20 +339,23 @@ const BikeDashboard = () => {
                             </Block>
                         </Block>
                     </Block>
-                    <Button
-                        marginTop={sizes.s}
-                        marginHorizontal={sizes.s}
-                        outlined={String(colors.white)}
-                        onPress={() => { setLogsVisible(!logsVisible); }}
-                    >
-                        <Text white bold>
-                            Logs ---
-                        </Text>
-                    </Button>
+                    <Block>
+                        <Button
+                            marginTop={sizes.s}
+                            marginHorizontal={sizes.s}
+                            outlined={String(colors.black)}
+                            color={colors.card}
+                            onPress={() => { setLogsVisible(!logsVisible); }}
+                        >
+                            <Text bold>
+                                Logs ---
+                            </Text>
+                        </Button>
+                    </Block>
                     <Block scroll marginHorizontal={sizes.s}>
                         {
                             logsVisible ?
-                                <Text white>
+                                <Text >
                                     {rawData}
                                 </Text> :
                                 <></>
@@ -362,8 +380,8 @@ const BikeDashboard = () => {
                         onValueChange={(value) => { setHumid(Number(Number(value).toFixed(0))) }}
                     /> */}
                 </Block>
-
-            </Image >
+            </Block>
+            {/* </Image > */}
             <Modal visible={showModal} onRequestClose={() => setModal(false)}>
                 <FlatList
                     keyExtractor={(index) => `${index}`}

@@ -16,7 +16,7 @@ let count = 0;
 let timer: NodeJS.Timeout;
 let autoId: NodeJS.Timeout;
 
-const quantityData = ['front', 'back', 'eyes'];
+const quantityData = ['front', 'front left', 'front right', 'eye left', 'eye right'];
 const wheelPickerData = ["IDLE", "FILL", "WIPE", "BLINK", "BREATH", "SCROLL", "INIT", "BRAKE"];
 enum COLOR_MODE {
     IDLE,
@@ -163,6 +163,7 @@ const BikeLED = () => {
             const R = parseInt(color.slice(1, 3), 16);
             const G = parseInt(color.slice(3, 5), 16);
             const B = parseInt(color.slice(5, 7), 16);
+
             const msg = {
                 mac: selectMac,
                 topic: "led_strips",
@@ -172,8 +173,9 @@ const BikeLED = () => {
                     color: [R, G, B]
                 }
             }
+
             socket.emit('evpi', JSON.stringify(msg));
-            console.log(JSON.stringify(msg))
+            console.log(JSON.stringify(msg));
         } catch (error) {
             console.error(error);
         }

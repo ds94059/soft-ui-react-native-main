@@ -19,7 +19,7 @@ import { Line, Text as SVGText, G } from 'react-native-svg'
 // import Slider from '@react-native-community/slider';
 // import { Slider } from "@miblanchard/react-native-slider"
 
-const macList = ['BFC1C5DD4C53', '47B74C7E7C31', 'FD3962C2D421', 'DB50AD1A2C93'];
+const macList = ['7181A7AA67AC', 'DB50AD1A2C93'];
 let selectMac = macList[0];
 
 const Dashboard = () => {

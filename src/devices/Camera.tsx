@@ -9,6 +9,7 @@ import { useData, useTheme, useTranslation } from '../hooks/';
 // import Orientation from 'react-native-orientation';
 
 import { VLCPlayer, VlCPlayerView } from 'react-native-vlc-media-player';
+import InAppBrowser from 'react-native-inappbrowser-reborn';
 
 const quantityData = ["EV_PI", "RESTROOM", "MAINDOOR"];
 enum CAMERA_SRC {
@@ -35,6 +36,50 @@ const Camera = () => {
             StatusBar.setBarStyle('dark-content');
         };
     }, []);
+
+    const openLink = async () => {
+        try {
+            const url = 'https://4524-39-11-62-4.ngrok.io'
+            if (await InAppBrowser.isAvailable()) {
+                const result = await InAppBrowser.open(url, {
+                    // iOS Properties
+                    dismissButtonStyle: 'cancel',
+                    preferredBarTintColor: '#453AA4',
+                    preferredControlTintColor: 'white',
+                    readerMode: false,
+                    animated: true,
+                    modalPresentationStyle: 'fullScreen',
+                    modalTransitionStyle: 'coverVertical',
+                    modalEnabled: true,
+                    enableBarCollapsing: false,
+                    // Android Properties
+                    showTitle: true,
+                    toolbarColor: '#6200EE',
+                    secondaryToolbarColor: 'black',
+                    navigationBarColor: 'black',
+                    navigationBarDividerColor: 'white',
+                    enableUrlBarHiding: true,
+                    enableDefaultShare: true,
+                    forceCloseOnRedirection: false,
+                    // Specify full animation resource identifier(package:anim/name)
+                    // or only resource name(in case of animation bundled with app).
+                    animations: {
+                        startEnter: 'slide_in_right',
+                        startExit: 'slide_out_left',
+                        endEnter: 'slide_in_left',
+                        endExit: 'slide_out_right'
+                    },
+                    headers: {
+                        'my-custom-header': 'my custom header value'
+                    }
+                })
+                alert(JSON.stringify(result))
+            }
+            else Linking.openURL(url)
+        } catch (error: any) {
+            alert(error.message)
+        }
+    }
 
     const setCamera = (index: number) => {
         if (index == 0)
@@ -93,11 +138,17 @@ const Camera = () => {
                             />
                         </Block>
                     </Button>
-                    <VlCPlayerView
+
+                    <Button onPress={openLink} color={colors.white} marginVertical={sizes.s}>
+                        <Text transform='uppercase' bold marginHorizontal={sizes.s}>
+                            open camera
+                        </Text>
+                    </Button>
+                    {/* <VlCPlayerView
                         videoAspectRatio="16:9"
                         url={cameraSrc}
                         style={{ align: "center", width: 400, height: 300, marginBottom: sizes.m, textColor: '#ffffff' }}
-                    />
+                    /> */}
                 </Block>
 
             </Image>
